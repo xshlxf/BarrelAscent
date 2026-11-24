@@ -1,0 +1,41 @@
+{
+    "name": "BarrelAscentControls",
+    "maps": [
+        {
+            "name": "Player",
+            "id": "6b1c2a10-0001-4a00-9000-000000000001",
+            "actions": [
+                { "name": "Move", "type": "Value", "id": "6b1c2a10-0001-4a00-9000-000000000011", "expectedControlType": "Vector2", "processors": "", "interactions": "", "initialStateCheck": true },
+                { "name": "Jump", "type": "Button", "id": "6b1c2a10-0001-4a00-9000-000000000012", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false }
+            ],
+            "bindings": [
+                { "name": "WASD", "id": "6b1c2a10-0001-4a00-9000-000000000101", "path": "2DVector", "interactions": "", "processors": "", "groups": "", "action": "Move", "isComposite": true, "isPartOfComposite": false },
+                { "name": "up", "id": "6b1c2a10-0001-4a00-9000-000000000102", "path": "<Keyboard>/w", "interactions": "", "processors": "", "groups": "Keyboard", "action": "Move", "isComposite": false, "isPartOfComposite": true },
+                { "name": "down", "id": "6b1c2a10-0001-4a00-9000-000000000103", "path": "<Keyboard>/s", "interactions": "", "processors": "", "groups": "Keyboard", "action": "Move", "isComposite": false, "isPartOfComposite": true },
+                { "name": "left", "id": "6b1c2a10-0001-4a00-9000-000000000104", "path": "<Keyboard>/a", "interactions": "", "processors": "", "groups": "Keyboard", "action": "Move", "isComposite": false, "isPartOfComposite": true },
+                { "name": "right", "id": "6b1c2a10-0001-4a00-9000-000000000105", "path": "<Keyboard>/d", "interactions": "", "processors": "", "groups": "Keyboard", "action": "Move", "isComposite": false, "isPartOfComposite": true },
+                { "name": "Arrows", "id": "6b1c2a10-0001-4a00-9000-000000000106", "path": "2DVector", "interactions": "", "processors": "", "groups": "", "action": "Move", "isComposite": true, "isPartOfComposite": false },
+                { "name": "up", "id": "6b1c2a10-0001-4a00-9000-000000000107", "path": "<Keyboard>/upArrow", "interactions": "", "processors": "", "groups": "Keyboard", "action": "Move", "isComposite": false, "isPartOfComposite": true },
+                { "name": "down", "id": "6b1c2a10-0001-4a00-9000-000000000108", "path": "<Keyboard>/downArrow", "interactions": "", "processors": "", "groups": "Keyboard", "action": "Move", "isComposite": false, "isPartOfComposite": true },
+                { "name": "left", "id": "6b1c2a10-0001-4a00-9000-000000000109", "path": "<Keyboard>/leftArrow", "interactions": "", "processors": "", "groups": "Keyboard", "action": "Move", "isComposite": false, "isPartOfComposite": true },
+                { "name": "right", "id": "6b1c2a10-0001-4a00-9000-00000000010a", "path": "<Keyboard>/rightArrow", "interactions": "", "processors": "", "groups": "Keyboard", "action": "Move", "isComposite": false, "isPartOfComposite": true },
+                { "name": "", "id": "6b1c2a10-0001-4a00-9000-00000000010b", "path": "<Keyboard>/space", "interactions": "", "processors": "", "groups": "Keyboard", "action": "Jump", "isComposite": false, "isPartOfComposite": false }
+            ]
+        },
+        {
+            "name": "Game",
+            "id": "6b1c2a10-0002-4a00-9000-000000000002",
+            "actions": [
+                { "name": "Pause", "type": "Button", "id": "6b1c2a10-0002-4a00-9000-000000000021", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "Restart", "type": "Button", "id": "6b1c2a10-0002-4a00-9000-000000000022", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false }
+            ],
+            "bindings": [
+                { "name": "", "id": "6b1c2a10-0002-4a00-9000-000000000201", "path": "<Keyboard>/escape", "interactions": "", "processors": "", "groups": "Keyboard", "action": "Pause", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "6b1c2a10-0002-4a00-9000-000000000202", "path": "<Keyboard>/r", "interactions": "", "processors": "", "groups": "Keyboard", "action": "Restart", "isComposite": false, "isPartOfComposite": false }
+            ]
+        }
+    ],
+    "controlSchemes": [
+        { "name": "Keyboard", "bindingGroup": "Keyboard", "devices": [ { "devicePath": "<Keyboard>", "isOptional": false, "isOR": false } ] }
+    ]
+}
