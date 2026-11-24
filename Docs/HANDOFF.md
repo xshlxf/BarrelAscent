@@ -1,10 +1,11 @@
-# Barrel Ascent — Handoff (estado al final de la Fase 7)
+# Barrel Ascent — Handoff (estado al final de la Fase 8 — proyecto completo)
 
-Leer esto primero. Detalle por fase en `Docs/PLAN.md` y `Docs/PHASE2.md` … `Docs/PHASE7.md`.
+Leer esto primero. Detalle por fase en `Docs/PLAN.md` y `Docs/PHASE2.md` … `Docs/PHASE8.md`.
 
 ## Estado
-- Fases 1–7 terminadas (git local, rama `master`, sin remoto). 37/37 pruebas PlayMode pasan.
-- Siguiente: **Fase 8 — pruebas finales + build independiente (macOS)**.
+- Fases 1–8 terminadas (git local, rama `master`, sin remoto). 41 PlayMode + 4 EditMode = 45 pruebas, todas pasan.
+- Build de macOS: `Builds/macOS/Barrel Ascent.app` (no versionado; se regenera con `BuildScript.BuildMacOS`).
+- Audio integrado (`Assets/Audio`, tabla en `Docs/PHASE8.md`). Para cambiar un sonido: sustituir el archivo o editar `GameLevelClips`/`MainMenuClips` en `Phase7Builder` y reconstruir.
 - Unity **6000.4.0f1**, plantilla 2D, render pipeline **Built-in** (no URP), Input System (Project-wide Actions = `Assets/Settings/BarrelAscentControls.inputactions`), TextMeshPro esenciales importados.
 - Resolución de referencia **640×360**, 32 PPU, tiles 32 px, Pixel Perfect Camera (`com.unity.2d.pixel-perfect`).
 
@@ -13,6 +14,8 @@ Leer esto primero. Detalle por fase en `Docs/PLAN.md` y `Docs/PHASE2.md` … `Do
   ```
   U=/Applications/Unity/Hub/Editor/6000.4.0f1/Unity.app/Contents/MacOS/Unity
   $U -batchmode -quit -projectPath . -executeMethod BarrelAscent.EditorTools.Phase7Builder.Build -logFile <log>   # cadena completa
+  $U -batchmode -quit -projectPath . -executeMethod BarrelAscent.EditorTools.BuildScript.BuildMacOS -logFile <log>    # build macOS
+  $U -batchmode -projectPath . -runTests -testPlatform EditMode -testResults <xml> -logFile <log>
   $U -batchmode -projectPath . -runTests -testPlatform PlayMode -testResults <xml> -logFile <log>   # ~3 min, ejecutar en segundo plano
   ```
   Cadena: `Phase7Builder.Build` = arte → `Phase5Builder.Build` (→ 4 → 3: nivel + jugador + barriles + reglas) → arte en escena + EffectsManager + AudioManager → `Phase6Builder.Build` (UI). Ejecutar solo la Fase 5 deja el nivel sin el arte de la Fase 7; usar siempre la 7. Reejecutar la Fase 6 cambia fileIDs de `BarrelPixel.asset`/`MainMenu.unity` (ruido normal).
@@ -33,7 +36,7 @@ Leer esto primero. Detalle por fase en `Docs/PLAN.md` y `Docs/PHASE2.md` … `Do
 - Originales en `ArtSource/`; procesados con `Assets/Editor/Art/SpriteExtractor.cs` desde `Phase7Builder` (detalle y decisiones en `Docs/PHASE7.md`).
 - Integrado: personaje animado (Idle/Run/Jump/Climb/Hurt), vigas y escalera del tileset, fondos por zona, efectos, meta con baliza, contorno en coleccionables.
 - Sin usar: `character_GoingDown`, decoraciones (salvo la baliza).
-- Audio: no hay archivos. `AudioManager` (Managers/AudioManager en GameLevel) tiene ranuras vacías para música y 8 efectos; basta con asignar clips en el Inspector (o en el builder si se quieren reconstruibles).
+- Audio: aportado por el usuario en `Assets/Audio`; `AudioManager` en GameLevel (Managers) y en MainMenu (raíz), clips asignados por `Phase7Builder`.
 - Mantener la paleta del documento (#182B38, #354B55, #77858A, #875333, #D97732, #B83B36, #E6C66B, #D7D5C7, #101820) y 32 PPU / Point / sin compresión.
 
 ## Eventos disponibles para efectos/audio

@@ -45,7 +45,7 @@ Ver sección 16 del documento maestro — creada tal cual bajo `Assets/`, más `
 8. F3b: Zonas 2 y 3. ✅ (adelantado a la Fase 3)
 9. F6: menú, HUD, pausa, game over, victoria, reinicio. ✅ (ver PHASE6.md)
 10. F7: arte/audio definitivos. ✅ (ver PHASE7.md; audio preparado sin clips)
-11. F8: pruebas finales + build independiente (macOS).
+11. F8: pruebas finales + build independiente (macOS). ✅ (ver PHASE8.md)
 
 ## 6. Trabajo paralelizable
 - Generación de arte (IA) en paralelo a todo el código.

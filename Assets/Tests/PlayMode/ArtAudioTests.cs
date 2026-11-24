@@ -12,6 +12,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 
 namespace BarrelAscent.Tests
 {
@@ -38,11 +39,14 @@ namespace BarrelAscent.Tests
         public IEnumerator UnloadLevel()
         {
             Time.timeScale = 1f;
-            var level = SceneManager.GetSceneByName("GameLevel");
-            if (!level.IsValid() || !level.isLoaded) yield break;
             var empty = SceneManager.CreateScene("EmptyArtScene_" + Time.frameCount);
             SceneManager.SetActiveScene(empty);
-            yield return SceneManager.UnloadSceneAsync(level);
+            for (int i = SceneManager.sceneCount - 1; i >= 0; i--)
+            {
+                var s = SceneManager.GetSceneAt(i);
+                if (s != empty && (s.name == "GameLevel" || s.name == "MainMenu"))
+                    yield return SceneManager.UnloadSceneAsync(s);
+            }
         }
 
         IEnumerator LoadLevel()
@@ -92,7 +96,7 @@ namespace BarrelAscent.Tests
         }
 
         [UnityTest]
-        public IEnumerator Jumping_SpawnsDust_AndRequestsSound()
+        public IEnumerator Jumping_SpawnsDust_AndRequestsJumpAndLandingSounds()
         {
             yield return LoadLevel();
             Assert.IsTrue(player.IsGrounded, "El jugador debe empezar en el suelo");
@@ -101,6 +105,10 @@ namespace BarrelAscent.Tests
             Release(keyboard.spaceKey);
             Assert.Greater(ActiveEffects(), 0, "Saltar debe levantar polvo");
             Assert.AreEqual("jump", audio.LastRequested);
+
+            // Al volver al suelo tras el salto suena el aterrizaje.
+            for (int i = 0; i < 150 && audio.LastRequested != "land"; i++) yield return new WaitForFixedUpdate();
+            Assert.AreEqual("land", audio.LastRequested, "Aterrizar tras el salto pide el sonido de aterrizaje");
         }
 
         [UnityTest]
@@ -115,6 +123,40 @@ namespace BarrelAscent.Tests
             var anim = player.GetComponentInChildren<Animator>();
             Assert.IsTrue(anim.GetCurrentAnimatorStateInfo(0).IsName("Hurt") || anim.GetNextAnimatorStateInfo(0).IsName("Hurt"),
                           "Durante el retroceso se muestra la pose de daño");
+        }
+
+        [UnityTest]
+        public IEnumerator GameLevel_HasGameplayMusic_PauseAndButtonsRequestSounds()
+        {
+            yield return LoadLevel();
+            Assert.IsNotNull(audio.Music, "GameLevel debe tener música");
+            Assert.AreEqual("GameplayLoop", audio.Music.name);
+            Assert.IsTrue(audio.Music.loadState != AudioDataLoadState.Failed);
+
+            Press(keyboard.escapeKey);
+            yield return null;
+            Release(keyboard.escapeKey);
+            yield return null;
+            Assert.AreEqual(GameManager.GameState.Paused, Object.FindFirstObjectByType<GameManager>().State);
+            Assert.AreEqual("pauseOpen", audio.LastRequested);
+
+            var resume = Object.FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .First(b => b.name == "ResumeButton");
+            resume.onClick.Invoke();
+            yield return null;
+            Assert.AreEqual("uiClick", audio.LastRequested, "Los botones de la interfaz suenan");
+        }
+
+        [UnityTest]
+        public IEnumerator MainMenu_HasMenuTheme()
+        {
+            SceneManager.LoadScene("MainMenu");
+            yield return null;
+            yield return null;
+            var menuAudio = Object.FindFirstObjectByType<AudioManager>();
+            Assert.IsNotNull(menuAudio, "MainMenu debe tener AudioManager");
+            Assert.IsNotNull(menuAudio.Music);
+            Assert.AreEqual("MainMenuTheme", menuAudio.Music.name);
         }
     }
 }

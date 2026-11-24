@@ -109,12 +109,14 @@ namespace BarrelAscent.EditorTools
             ImportBackgrounds();
             ImportEffects();
             CreateGoalSprite();
+            ConfigureAudioImports();
             AssetDatabase.SaveAssets();
 
             Phase5Builder.Build();   // nivel, jugador, barriles, reglas (usa ya el tile y la escalera nuevos)
             ApplyGoalSprite();
             WireScene();
             Phase6Builder.Build();   // la UI depende de los managers de GameLevel
+            WireMainMenuAudio();     // después de la Fase 6, que rehace la UI del menú
             Debug.Log("[Phase7Builder] Phase 7 build complete.");
         }
 
@@ -571,7 +573,7 @@ namespace BarrelAscent.EditorTools
             SetSequence(so, "damage", EffectFrames("impact"), 14f, new Vector2(0f, 0.5f));
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            // Audio (ranuras vacías: no hay sonidos en el paquete).
+            // Audio (Assets/Audio, aportado por el usuario).
             var audioGo = new GameObject("AudioManager");
             audioGo.transform.SetParent(managers, false);
             var audio = audioGo.AddComponent<AudioManager>();
@@ -580,8 +582,80 @@ namespace BarrelAscent.EditorTools
             aso.FindProperty("levelManager").objectReferenceValue = Object.FindFirstObjectByType<LevelManager>();
             aso.FindProperty("player").objectReferenceValue = player;
             aso.FindProperty("playerCollision").objectReferenceValue = collision;
+            AssignClips(aso, GameLevelClips);
             aso.ApplyModifiedPropertiesWithoutUndo();
 
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+        }
+
+        // =====================================================================
+        // Audio
+        // =====================================================================
+
+        const string MusicDir = "Assets/Audio/Music";
+        const string SfxDir = "Assets/Audio/SFX";
+
+        // Ranura del AudioManager → archivo. Una ranura sin archivo se queda vacía (sin sonido).
+        static readonly (string slot, string path)[] GameLevelClips =
+        {
+            ("music", MusicDir + "/GameplayLoop.mp3"),
+            ("jump", SfxDir + "/jump.mp3"),
+            ("land", SfxDir + "/land.mp3"),
+            ("barrelSmash", SfxDir + "/barrel_smash.mp3"),
+            ("collect", SfxDir + "/collect.wav"),
+            ("damage", SfxDir + "/damage.mp3"),
+            ("zoneComplete", SfxDir + "/zone_complete.mp3"),
+            ("victory", SfxDir + "/victory.mp3"),
+            ("gameOver", SfxDir + "/game_over.mp3"),
+            ("pauseOpen", SfxDir + "/pause_open.mp3"),
+            ("uiClick", SfxDir + "/ui_click.mp3"),
+        };
+
+        static readonly (string slot, string path)[] MainMenuClips =
+        {
+            ("music", MusicDir + "/MainMenuTheme.mp3"),
+            ("uiClick", SfxDir + "/ui_click.mp3"),
+        };
+
+        /// <summary>Música en streaming (Vorbis); efectos cortos descomprimidos al cargar (sin latencia).</summary>
+        static void ConfigureAudioImports()
+        {
+            foreach (var guid in AssetDatabase.FindAssets("t:AudioClip", new[] { "Assets/Audio" }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var importer = (AudioImporter)AssetImporter.GetAtPath(path);
+                bool music = path.StartsWith(MusicDir);
+                var settings = importer.defaultSampleSettings;
+                settings.loadType = music ? AudioClipLoadType.Streaming : AudioClipLoadType.DecompressOnLoad;
+                settings.compressionFormat = music ? AudioCompressionFormat.Vorbis : AudioCompressionFormat.ADPCM;
+                settings.quality = 0.7f;
+                importer.defaultSampleSettings = settings;
+                importer.loadInBackground = music;
+                importer.SaveAndReimport();
+            }
+        }
+
+        static void AssignClips(SerializedObject so, (string slot, string path)[] clips)
+        {
+            foreach (var (slot, path) in clips)
+            {
+                var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
+                if (clip == null) Debug.LogWarning($"[Phase7Builder] Falta el audio {path}; la ranura {slot} queda vacía.");
+                so.FindProperty(slot).objectReferenceValue = clip;
+            }
+        }
+
+        /// <summary>MainMenu: AudioManager con la música del menú y el clic de los botones.</summary>
+        static void WireMainMenuAudio()
+        {
+            var scene = EditorSceneManager.OpenScene(ProjectSetup.MainMenuScene, OpenSceneMode.Single);
+            foreach (var go in scene.GetRootGameObjects())
+                if (go.name == "AudioManager") Object.DestroyImmediate(go);
+            var audio = new GameObject("AudioManager").AddComponent<AudioManager>();
+            var so = new SerializedObject(audio);
+            AssignClips(so, MainMenuClips);
+            so.ApplyModifiedPropertiesWithoutUndo();
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
         }

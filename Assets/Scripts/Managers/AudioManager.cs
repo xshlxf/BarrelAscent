@@ -2,13 +2,16 @@ using BarrelAscent.Enemies;
 using BarrelAscent.Environment;
 using BarrelAscent.Player;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace BarrelAscent.Managers
 {
     /// <summary>
     /// Sonido del juego. Escucha los eventos existentes y reproduce el clip asignado a cada uno.
     /// Todas las ranuras son opcionales: el paquete de recursos no incluye audio, así que un clip
-    /// vacío simplemente no suena. Para añadir sonidos basta con asignarlos en el Inspector.
+    /// vacío simplemente no suena. Los clips los asigna Phase7Builder (Assets/Audio).
+    /// Se usa en las dos escenas: en MainMenu solo tiene música y clic de botón (las referencias
+    /// de juego quedan vacías y sus eventos se ignoran).
     /// </summary>
     public class AudioManager : MonoBehaviour
     {
@@ -31,13 +34,20 @@ namespace BarrelAscent.Managers
         [SerializeField] AudioClip zoneComplete;
         [SerializeField] AudioClip victory;
         [SerializeField] AudioClip gameOver;
+        [SerializeField] AudioClip pauseOpen;
+        [Tooltip("Se reproduce al pulsar cualquier botón de la interfaz de la escena.")]
+        [SerializeField] AudioClip uiClick;
         [SerializeField, Range(0f, 1f)] float sfxVolume = 0.8f;
 
         AudioSource musicSource;
         AudioSource sfxSource;
+        // El clic de un botón que cambia de escena se cortaría con la escena: va en una fuente persistente.
+        static AudioSource uiSource;
 
         /// <summary>Último clip pedido (aunque esté vacío). Útil para pruebas.</summary>
         public string LastRequested { get; private set; }
+        public AudioClip Music => music;
+        public bool IsMusicPlaying => musicSource != null && musicSource.isPlaying;
 
         void Awake()
         {
@@ -56,6 +66,9 @@ namespace BarrelAscent.Managers
 
         void Start()
         {
+            foreach (var button in FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                button.onClick.AddListener(OnUiClick);
+
             if (music != null)
             {
                 musicSource.clip = music;
@@ -97,6 +110,21 @@ namespace BarrelAscent.Managers
         void OnZoneCompleted(int zone) => Play(zoneComplete, nameof(zoneComplete));
         void OnCollected(Collectible c) => Play(collect, nameof(collect));
 
+        void OnUiClick()
+        {
+            LastRequested = nameof(uiClick);
+            if (uiClick == null) return;
+            if (uiSource == null)
+            {
+                var go = new GameObject("UiAudio");
+                DontDestroyOnLoad(go);
+                uiSource = go.AddComponent<AudioSource>();
+                uiSource.playOnAwake = false;
+                uiSource.ignoreListenerPause = true;
+            }
+            uiSource.PlayOneShot(uiClick, sfxVolume);
+        }
+
         void OnBarrelDestroyed(BarrelController barrel, bool byPlayer)
         {
             if (byPlayer) Play(barrelSmash, nameof(barrelSmash));
@@ -106,7 +134,7 @@ namespace BarrelAscent.Managers
         {
             switch (state)
             {
-                case GameManager.GameState.Paused: musicSource.Pause(); break;
+                case GameManager.GameState.Paused: musicSource.Pause(); Play(pauseOpen, nameof(pauseOpen)); break;
                 case GameManager.GameState.Playing: musicSource.UnPause(); break;
                 case GameManager.GameState.Won: musicSource.Stop(); Play(victory, nameof(victory)); break;
                 case GameManager.GameState.Lost: musicSource.Stop(); Play(gameOver, nameof(gameOver)); break;
