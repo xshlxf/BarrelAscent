@@ -32,6 +32,26 @@ namespace BarrelAscent.Environment
             area.isTrigger = true;
         }
 
+        /// <summary>
+        /// Ajusta sprite y trigger a una altura dada (de superficie inferior a superficie superior),
+        /// con el pivote del objeto en la base. Usado por el constructor de nivel.
+        /// </summary>
+        public void Configure(float height)
+        {
+            var box = GetComponent<BoxCollider2D>();
+            box.isTrigger = true;
+            box.size = new Vector2(0.8f, height + topExtension);
+            box.offset = new Vector2(0f, (height + topExtension) * 0.5f);
+
+            var sr = GetComponentInChildren<SpriteRenderer>();
+            if (sr != null)
+            {
+                sr.drawMode = SpriteDrawMode.Tiled;
+                sr.size = new Vector2(1f, height);
+                sr.transform.localPosition = new Vector3(0f, height * 0.5f, 0f);
+            }
+        }
+
         void Reset()
         {
             GetComponent<BoxCollider2D>().isTrigger = true;

@@ -34,15 +34,15 @@ namespace BarrelAscent.EditorTools
         const string TestAreaName = "Phase2_TestArea";
 
         // Paleta Barrel Ascent
-        static readonly Color32 DarkBlue = Hex(0x182B38);
-        static readonly Color32 Steel = Hex(0x354B55);
-        static readonly Color32 MetalGray = Hex(0x77858A);
-        static readonly Color32 Rust = Hex(0x875333);
-        static readonly Color32 Orange = Hex(0xD97732);
-        static readonly Color32 Yellow = Hex(0xE6C66B);
-        static readonly Color32 LightGray = Hex(0xD7D5C7);
-        static readonly Color32 Shadow = Hex(0x101820);
-        static readonly Color32 Clear = new Color32(0, 0, 0, 0);
+        internal static readonly Color32 DarkBlue = Hex(0x182B38);
+        internal static readonly Color32 Steel = Hex(0x354B55);
+        internal static readonly Color32 MetalGray = Hex(0x77858A);
+        internal static readonly Color32 Rust = Hex(0x875333);
+        internal static readonly Color32 Orange = Hex(0xD97732);
+        internal static readonly Color32 Yellow = Hex(0xE6C66B);
+        internal static readonly Color32 LightGray = Hex(0xD7D5C7);
+        internal static readonly Color32 Shadow = Hex(0x101820);
+        internal static readonly Color32 Clear = new Color32(0, 0, 0, 0);
 
         [MenuItem("Barrel Ascent/Setup/Build Phase 2 (Player + Test Area)")]
         public static void Build()
@@ -78,7 +78,7 @@ namespace BarrelAscent.EditorTools
                 Debug.LogWarning($"[Phase2Builder] Layer {index} ya está ocupada por '{p.stringValue}', se esperaba '{name}'.");
         }
 
-        static int Layer(string name) => LayerMask.NameToLayer(name);
+        internal static int Layer(string name) => LayerMask.NameToLayer(name);
 
         // ---------------- Sprites placeholder ----------------
 
@@ -95,7 +95,7 @@ namespace BarrelAscent.EditorTools
             ConfigureSprite(LadderSpritePath, SpriteAlignment.Center);
         }
 
-        static void ConfigureSprite(string path, SpriteAlignment alignment)
+        internal static void ConfigureSprite(string path, SpriteAlignment alignment)
         {
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
             var settings = new TextureImporterSettings();
@@ -113,13 +113,13 @@ namespace BarrelAscent.EditorTools
             importer.SaveAndReimport();
         }
 
-        static void WritePng(string path, Texture2D tex)
+        internal static void WritePng(string path, Texture2D tex)
         {
             File.WriteAllBytes(path, tex.EncodeToPNG());
             Object.DestroyImmediate(tex);
         }
 
-        static Texture2D NewTex(Color32 fill)
+        internal static Texture2D NewTex(Color32 fill)
         {
             var t = new Texture2D(32, 32, TextureFormat.RGBA32, false);
             var px = new Color32[32 * 32];
@@ -128,7 +128,7 @@ namespace BarrelAscent.EditorTools
             return t;
         }
 
-        static void Rect(Texture2D t, int x0, int y0, int x1, int y1, Color32 c)
+        internal static void Rect(Texture2D t, int x0, int y0, int x1, int y1, Color32 c)
         {
             for (int y = y0; y <= y1; y++)
                 for (int x = x0; x <= x1; x++)
@@ -189,13 +189,13 @@ namespace BarrelAscent.EditorTools
             return Finish(t);
         }
 
-        static Texture2D Finish(Texture2D t)
+        internal static Texture2D Finish(Texture2D t)
         {
             t.Apply();
             return t;
         }
 
-        static Color32 Hex(int rgb) => new Color32((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb, 0xFF);
+        internal static Color32 Hex(int rgb) => new Color32((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb, 0xFF);
 
         // ---------------- Física ----------------
 
@@ -308,6 +308,14 @@ namespace BarrelAscent.EditorTools
         static void BuildTestArea(GameObject playerPrefab)
         {
             var scene = EditorSceneManager.OpenScene(ProjectSetup.GameLevelScene, OpenSceneMode.Single);
+
+            // Si ya existe el nivel real (Fase 3), no volver a crear la zona de pruebas.
+            foreach (var go in scene.GetRootGameObjects())
+                if (go.name == "Level")
+                {
+                    Debug.Log("[Phase2Builder] GameLevel ya tiene el nivel de la Fase 3; se omite la zona de pruebas.");
+                    return;
+                }
 
             foreach (var go in scene.GetRootGameObjects())
                 if (go.name == TestAreaName || go.name == "Player")

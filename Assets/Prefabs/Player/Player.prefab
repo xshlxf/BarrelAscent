@@ -126,6 +126,7 @@ GameObject:
   - component: {fileID: 1503093079137531483}
   - component: {fileID: 1555472809271430772}
   - component: {fileID: 3077690338685233645}
+  - component: {fileID: 2775217460163441520}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -241,3 +242,25 @@ MonoBehaviour:
   animator: {fileID: 5242368924946764271}
   spriteRenderer: {fileID: 9074099730337373758}
   inputActions: {fileID: 0}
+--- !u!114 &2775217460163441520
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3739005643061705427}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6491bdb52a7948cdaf3cfcb822a099c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BarrelAscent::BarrelAscent.Player.PlayerCollision
+  barrelMask:
+    serializedVersion: 2
+    m_Bits: 512
+  invulnerabilityTime: 1.5
+  knockback: {x: 3, y: 5}
+  blinkInterval: 0.1
+  bounceVelocity: 9
+  stompMargin: 0.05
+  stompMaxVerticalSpeed: 2
+  spriteRenderer: {fileID: 9074099730337373758}

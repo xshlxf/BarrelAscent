@@ -56,6 +56,7 @@ namespace BarrelAscent.Player
         Vector2 moveInput;
         float jumpRequestTime = float.NegativeInfinity;
         float lastGroundedTime = float.NegativeInfinity;
+        float knockbackUntil = float.NegativeInfinity;
         Ladder currentLadder;
         float feetOffset; // distancia del pivote del Rigidbody2D a la base del collider
         readonly List<Collider2D> overlapResults = new List<Collider2D>(4);
@@ -85,11 +86,26 @@ namespace BarrelAscent.Player
 
         void OnEnable()
         {
-            var asset = inputActions != null ? inputActions : InputSystem.actions;
+            BindActions(inputActions != null ? inputActions : InputSystem.actions);
+        }
+
+        /// <summary>
+        /// Sustituye las acciones de entrada en tiempo de ejecución (p. ej. pruebas automáticas
+        /// con un teclado simulado, donde las Project-wide Actions no están disponibles).
+        /// </summary>
+        public void SetInputActions(InputActionAsset asset)
+        {
+            inputActions = asset;
+            BindActions(asset);
+        }
+
+        void BindActions(InputActionAsset asset)
+        {
+            moveAction = null;
+            jumpAction = null;
             if (asset == null)
             {
-                Debug.LogError("[PlayerController] No hay Input Actions asignadas ni Project-wide Actions.", this);
-                enabled = false;
+                Debug.LogWarning("[PlayerController] No hay Input Actions asignadas ni Project-wide Actions; el jugador no responderá.", this);
                 return;
             }
 
@@ -101,7 +117,7 @@ namespace BarrelAscent.Player
 
         void Update()
         {
-            if (!ControlEnabled)
+            if (!ControlEnabled || moveAction == null)
             {
                 moveInput = Vector2.zero;
                 UpdateAnimator();
@@ -131,6 +147,8 @@ namespace BarrelAscent.Player
 
             TryStartClimb();
             if (IsClimbing) return;
+
+            if (Time.time < knockbackUntil) return; // durante el retroceso no hay control horizontal
 
             body.linearVelocity = new Vector2(moveInput.x * moveSpeed, body.linearVelocity.y);
             TryJump();
@@ -266,6 +284,29 @@ namespace BarrelAscent.Player
                 jumpRequestTime = float.NegativeInfinity;
                 body.linearVelocity = new Vector2(0f, body.linearVelocity.y);
             }
+        }
+
+        /// <summary>
+        /// Impulso vertical tras destruir un barril. No consume ni concede un salto: tras el rebote
+        /// solo se puede volver a saltar al tocar el suelo.
+        /// </summary>
+        public void Bounce(float verticalVelocity)
+        {
+            StopClimbing();
+            body.linearVelocity = new Vector2(body.linearVelocity.x, verticalVelocity);
+            lastGroundedTime = float.NegativeInfinity;
+            jumpRequestTime = float.NegativeInfinity;
+            IsGrounded = false;
+        }
+
+        /// <summary>Retroceso al recibir daño: fija la velocidad y bloquea el control horizontal un instante.</summary>
+        public void Knockback(Vector2 velocity, float duration = 0.25f)
+        {
+            StopClimbing();
+            body.linearVelocity = velocity;
+            knockbackUntil = Time.time + duration;
+            lastGroundedTime = float.NegativeInfinity;
+            IsGrounded = false;
         }
 
         /// <summary>Coloca al jugador en un punto, sin velocidad y fuera de cualquier escalera.</summary>
