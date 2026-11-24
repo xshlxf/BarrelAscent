@@ -7,7 +7,7 @@ using UnityEngine;
 namespace BarrelAscent.Tests
 {
     /// <summary>
-    /// Comprobaciones estáticas del proyecto antes de compilar el juego (Fase 8):
+    /// Comprobaciones estáticas del proyecto antes de compilar el juego:
     /// escenas del build, que no quede arte placeholder en uso, ajustes de importación pixel art
     /// y que todos los estados del Animator del jugador tengan animación.
     /// </summary>

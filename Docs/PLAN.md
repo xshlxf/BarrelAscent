@@ -35,17 +35,17 @@ Datos de balance por zona en un `ScriptableObject` `ZoneConfig` (velocidad barri
 Ver sección 16 del documento maestro — creada tal cual bajo `Assets/`, más `Assets/Settings/` (Input Actions, ZoneConfig).
 
 ## 5. Tareas pequeñas (orden recomendado → versión jugable rápida)
-1. F1: proyecto, paquetes, carpetas, escenas, Input Actions, git. ✅
-2. F2: PlayerController (mover/saltar/suelo) sobre una plataforma de prueba. ✅ (ver PHASE2.md)
-3. F3a: Tilemap de Zona 1 + CameraFollow. → **primer jugable** ✅ (ver PHASE3.md)
-4. F4a: Barril (FSM + bordes) + daño + pisotón. → **prototipo con barril** ✅ (ver PHASE4.md)
-5. F2b: escaleras. ✅ (adelantado a la Fase 2)
-6. F4b: spawner + ZoneConfig. ✅
-7. F5: coleccionables, puntuación, vidas, reaparición, LevelManager, meta. ✅ (ver PHASE5.md)
-8. F3b: Zonas 2 y 3. ✅ (adelantado a la Fase 3)
-9. F6: menú, HUD, pausa, game over, victoria, reinicio. ✅ (ver PHASE6.md)
-10. F7: arte/audio definitivos. ✅ (ver PHASE7.md; audio preparado sin clips)
-11. F8: pruebas finales + build independiente (macOS). ✅ (ver PHASE8.md)
+1. F1: proyecto, paquetes, carpetas, escenas, Input Actions, git.
+2. F2: PlayerController (mover/saltar/suelo) sobre una plataforma de prueba. (ver PHASE2.md)
+3. F3a: Tilemap de Zona 1 + CameraFollow. → **primer jugable** (ver PHASE3.md)
+4. F4a: Barril (FSM + bordes) + daño + pisotón. → **prototipo con barril** (ver PHASE4.md)
+5. F2b: escaleras.(adelantado a la Fase 2)
+6. F4b: spawner + ZoneConfig.
+7. F5: coleccionables, puntuación, vidas, reaparición, LevelManager, meta. (ver PHASE5.md)
+8. F3b: Zonas 2 y 3.(adelantado a la Fase 3)
+9. F6: menú, HUD, pausa, game over, victoria, reinicio. (ver PHASE6.md)
+10. F7: arte/audio definitivos.(ver PHASE7.md; audio preparado sin clips)
+11. F8: pruebas finales + build independiente (macOS). (ver PHASE8.md)
 
 ## 6. Trabajo paralelizable
 - Generación de arte (IA) en paralelo a todo el código.

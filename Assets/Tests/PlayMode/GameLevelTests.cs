@@ -13,7 +13,7 @@ using UnityEngine.TestTools;
 namespace BarrelAscent.Tests
 {
     /// <summary>
-    /// Pruebas de la Fase 3 sobre la escena real GameLevel: colisiones del Tilemap, todas las escaleras,
+    /// Pruebas sobre la escena real GameLevel: colisiones del Tilemap, todas las escaleras,
     /// los saltos obligatorios del recorrido y la cámara vertical. Juntas demuestran que las tres zonas
     /// son accesibles desde el inicio hasta la meta.
     /// </summary>

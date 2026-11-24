@@ -18,7 +18,7 @@ using Object = UnityEngine.Object;
 namespace BarrelAscent.EditorTools
 {
     /// <summary>
-    /// Fase 6: interfaz.
+    /// Interfaz:
     ///  0. ImportTmpEssentials (ejecutar una vez, en su propia llamada): recursos esenciales de TextMeshPro.
     ///  1. Fuente pixel BarrelPixel y sprites de UI desde ArtSource/06_UI y el fondo de la zona 1.
     ///  2. Escena MainMenu: fondo, título, Jugar, Salir, controles.

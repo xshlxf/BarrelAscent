@@ -13,7 +13,7 @@ using Object = UnityEngine.Object;
 namespace BarrelAscent.EditorTools
 {
     /// <summary>
-    /// Fase 3: construye el nivel vertical de GameLevel a partir de Assets/Tilemaps/LevelLayout.txt.
+    /// Construye el nivel vertical de GameLevel a partir de Assets/Tilemaps/LevelLayout.txt.
     ///
     /// Leyenda (1 carácter = 1 tile de 32 px; la primera línea es la fila superior):
     ///   #  plataforma sólida (Tilemap "Ground", capa Ground)

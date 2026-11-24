@@ -15,7 +15,7 @@ using UnityEngine.TestTools;
 namespace BarrelAscent.Tests
 {
     /// <summary>
-    /// Pruebas de la Fase 5 sobre GameLevel: coleccionables, puntuación, vidas, reaparición,
+    /// Reglas de partida sobre GameLevel: coleccionables, puntuación, vidas, reaparición,
     /// progresión por zonas, meta, pausa, derrota y reinicio.
     /// Nota: con Time.timeScale = 0 (pausa / fin) se espera por fotogramas, no por pasos físicos.
     /// </summary>

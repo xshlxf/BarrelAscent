@@ -8,9 +8,9 @@ using UnityEngine.UI;
 namespace BarrelAscent.UI
 {
     /// <summary>
-    /// Interfaz de GameLevel: HUD (puntuación, vidas, zona), aviso de zona y paneles de pausa,
-    /// Game Over y victoria. Solo escucha eventos del GameManager/LevelManager y llama a sus métodos
-    /// públicos desde los botones; no contiene reglas de juego.
+    /// Interfaz de GameLevel: HUD, aviso de zona y paneles de pausa, Game Over y victoria.
+    /// Solo escucha eventos de GameManager/LevelManager y llama a sus métodos desde los botones;
+    /// no contiene reglas de juego.
     /// </summary>
     public class UIManager : MonoBehaviour
     {
@@ -49,6 +49,11 @@ namespace BarrelAscent.UI
         public GameObject VictoryPanel => victoryPanel;
         public TMP_Text ScoreText => scoreText;
 
+        void OnEnable()
+        {
+            if (started) Subscribe(true);
+        }
+
         void Start()
         {
             if (gameManager == null) gameManager = GameManager.Instance;
@@ -65,15 +70,17 @@ namespace BarrelAscent.UI
             if (levelManager != null && levelManager.CurrentZone >= 0) SetZoneLabel(levelManager.CurrentZone);
         }
 
-        void OnEnable()
-        {
-            if (started) Subscribe(true);
-        }
-
         void OnDisable()
         {
             Subscribe(false);
         }
+
+        // ---------- Botones (conectados en el Inspector) ----------
+
+        public void OnPauseButton() => gameManager?.Pause();
+        public void OnResumeButton() => gameManager?.Resume();
+        public void OnRestartButton() => gameManager?.Restart();
+        public void OnMainMenuButton() => gameManager?.LoadMainMenu();
 
         void Subscribe(bool on)
         {
@@ -184,12 +191,5 @@ namespace BarrelAscent.UI
         {
             if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(go);
         }
-
-        // ---------- Botones (conectados en el Inspector) ----------
-
-        public void OnPauseButton() => gameManager?.Pause();
-        public void OnResumeButton() => gameManager?.Resume();
-        public void OnRestartButton() => gameManager?.Restart();
-        public void OnMainMenuButton() => gameManager?.LoadMainMenu();
     }
 }

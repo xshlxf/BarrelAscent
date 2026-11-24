@@ -16,7 +16,7 @@ using UnityEngine.UI;
 namespace BarrelAscent.Tests
 {
     /// <summary>
-    /// Pruebas finales (Fase 8): una sesión completa de principio a fin, como la haría un jugador,
+    /// Pruebas finales: una sesión completa de principio a fin, como la haría un jugador,
     /// y una prueba de resistencia con los barriles activos. Cualquier error o excepción en el log
     /// hace fallar la prueba (comportamiento por defecto de LogAssert).
     /// </summary>

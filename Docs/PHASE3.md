@@ -60,7 +60,7 @@ Main Camera   Camera ortográfica + PixelPerfectCamera + CameraFollow
 
 ## CameraFollow (Inspector)
 Target = Player · Level Center X = 0 · Min Y = 0 · Max Y = 46 · Look Ahead Y = 1.5 ·
-Smooth Time 0.18 · Snap To Pixel Grid ✔ · Pixels Per Unit 32.
+Smooth Time 0.18 · Snap To Pixel Grid activado · Pixels Per Unit 32.
 `SnapToTarget()` coloca la cámara al instante (lo usará la reaparición en la Fase 5).
 
 ## Pruebas
@@ -84,6 +84,6 @@ Las pruebas 2 y 3 juntas demuestran que se puede ir del inicio a la meta (criter
 | Se ve fuera del nivel | Revisar Min Y / Max Y de CameraFollow. |
 
 ## Criterios de finalización
-Plataformas con colisión ✅ · escaleras ✅ · tres zonas conectadas y accesibles ✅ ·
-cámara vertical con límites ✅ — comprobados con pruebas automáticas.
+Plataformas con colisión · escaleras · tres zonas conectadas y accesibles ·
+cámara vertical con límites — comprobados con pruebas automáticas.
 Arte del escenario: placeholders `PH_*` hasta recibir el tileset definitivo (Fase 7).

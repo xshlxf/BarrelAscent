@@ -8,7 +8,7 @@ using UnityEngine;
 namespace BarrelAscent.EditorTools
 {
     /// <summary>
-    /// Fase 8: build independiente para macOS (Intel + Apple silicon, Mono).
+    /// Build independiente para macOS (Intel + Apple silicon, Mono).
     /// Menú: Barrel Ascent/Build/macOS.
     /// Batchmode: -executeMethod BarrelAscent.EditorTools.BuildScript.BuildMacOS
     /// Resultado: Builds/macOS/Barrel Ascent.app (la carpeta Builds/ está en .gitignore).

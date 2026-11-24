@@ -10,7 +10,7 @@ using UnityEngine.U2D;
 namespace BarrelAscent.EditorTools
 {
     /// <summary>
-    /// Fase 1: crea las escenas base, configura Build Settings y las acciones de entrada.
+    /// Configuración inicial: crea las escenas base, configura Build Settings y las acciones de entrada.
     /// Se puede ejecutar desde el menú "Barrel Ascent/Setup/..." o en batchmode con
     /// -executeMethod BarrelAscent.EditorTools.ProjectSetup.RunPhase1
     /// Es idempotente: no sobrescribe escenas que ya existen.

@@ -11,7 +11,7 @@ using UnityEngine.TestTools;
 namespace BarrelAscent.Tests
 {
     /// <summary>
-    /// Pruebas de la Fase 2 sobre el prefab real del jugador, con teclado simulado.
+    /// Movimiento, salto y escaleras sobre el prefab real del jugador, con teclado simulado.
     /// Escenario propio: suelo (top y = 0), plataforma superior (top y = 3) y una escalera en x = 0.
     /// </summary>
     public class PlayerControllerTests : InputTestFixture

@@ -80,8 +80,8 @@ Además, todas las esperas de las pruebas fallan de inmediato si el tiempo está
 Inspector del GameManager (modo Debug) o con los eventos.
 
 ## Criterios de finalización
-Criterios del documento maestro: 12 coleccionables ✅ · 13 vidas ✅ · 14 invulnerabilidad ✅ ·
-15 tres zonas accesibles ✅ (Fase 3) · 16 dificultad progresiva ✅ · 17 meta → victoria ✅ ·
-18 tres vidas perdidas → Game Over ✅ · 19 pausa ✅ (lógica; panel en la Fase 6) · 20 reinicio ✅ (tecla R; botones en la Fase 6).
+Criterios del documento maestro cumplidos: 12 coleccionables · 13 vidas · 14 invulnerabilidad ·
+15 tres zonas accesibles (Fase 3) · 16 dificultad progresiva · 17 meta → victoria ·
+18 tres vidas perdidas → Game Over · 19 pausa (lógica; panel en la Fase 6) · 20 reinicio (tecla R; botones en la Fase 6).
 
 Observación para la Fase 7: el coleccionable "componente" es oscuro y se distingue poco sobre los fondos de la zona 3.

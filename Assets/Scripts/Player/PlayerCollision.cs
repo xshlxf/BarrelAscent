@@ -7,12 +7,10 @@ using UnityEngine;
 namespace BarrelAscent.Player
 {
     /// <summary>
-    /// Impactos del jugador con barriles:
-    ///  - Aterrizar encima → el barril se destruye y el jugador rebota.
-    ///  - Impacto lateral (o desde abajo) → daño, retroceso e invulnerabilidad temporal (parpadeo).
-    /// La detección usa una consulta de solapamiento con la cápsula del jugador; jugador y barriles
-    /// no colisionan físicamente (matriz de capas), así un barril nunca empuja al jugador.
-    /// Fase 5: vidas y reaparición a través de GameManager escuchando <see cref="Damaged"/>.
+    /// Impactos del jugador con barriles: caer encima destruye el barril y hace rebotar al jugador;
+    /// un impacto lateral causa daño, retroceso e invulnerabilidad temporal (parpadeo).
+    /// Jugador y barriles no colisionan físicamente (matriz de capas): el contacto se detecta con
+    /// un solapamiento de la cápsula, así un barril nunca empuja al jugador.
     /// </summary>
     [RequireComponent(typeof(PlayerController), typeof(CapsuleCollider2D))]
     public class PlayerCollision : MonoBehaviour
@@ -84,12 +82,9 @@ namespace BarrelAscent.Player
             if (smashedThisStep) controller.Bounce(bounceVelocity);
         }
 
-        bool IsStomp(BarrelController barrel)
+        void OnDisable()
         {
-            float feet = capsule.bounds.min.y;
-            bool above = feet >= barrel.transform.position.y + stompMargin;
-            bool notRisingFast = controller.Body.linearVelocity.y <= stompMaxVerticalSpeed;
-            return above && notRisingFast && !controller.IsClimbing;
+            if (spriteRenderer != null) spriteRenderer.enabled = true;
         }
 
         /// <summary>Aplica daño si no está en invulnerabilidad. Devuelve true si el daño se aplicó.</summary>
@@ -117,6 +112,14 @@ namespace BarrelAscent.Player
             blinkRoutine = StartCoroutine(Blink());
         }
 
+        bool IsStomp(BarrelController barrel)
+        {
+            float feet = capsule.bounds.min.y;
+            bool above = feet >= barrel.transform.position.y + stompMargin;
+            bool notRisingFast = controller.Body.linearVelocity.y <= stompMaxVerticalSpeed;
+            return above && notRisingFast && !controller.IsClimbing;
+        }
+
         IEnumerator Blink()
         {
             while (IsInvulnerable)
@@ -126,11 +129,6 @@ namespace BarrelAscent.Player
             }
             if (spriteRenderer != null) spriteRenderer.enabled = true;
             blinkRoutine = null;
-        }
-
-        void OnDisable()
-        {
-            if (spriteRenderer != null) spriteRenderer.enabled = true;
         }
     }
 }

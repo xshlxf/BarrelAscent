@@ -14,10 +14,10 @@ using Object = UnityEngine.Object;
 namespace BarrelAscent.EditorTools
 {
     /// <summary>
-    /// Fase 5: coleccionables, meta, puntos de reaparición y GameManager.
+    /// Coleccionables, meta, puntos de reaparición y GameManager.
     ///  1. Procesa los coleccionables de ArtSource/04_Collectibles y dibuja la bandera de meta (placeholder).
     ///  2. Crea los prefabs Collectible y Goal.
-    ///  3. Reconstruye las fases 3–4 y coloca coleccionables, meta y reapariciones en GameLevel.
+    ///  3. Reconstruye nivel y barriles (Phase4Builder → Phase3Builder) y coloca coleccionables, meta y reapariciones en GameLevel.
     ///  4. Añade el GameManager y conecta todas las referencias.
     /// Menú: Barrel Ascent/Setup/Build Phase 5 (Game Rules).
     /// Batchmode: -executeMethod BarrelAscent.EditorTools.Phase5Builder.Build
@@ -57,7 +57,7 @@ namespace BarrelAscent.EditorTools
                 var sheet = SpriteExtractor.Load(Path.Combine(ArtDir, name + ".png"), minGap: 10000);
                 var f = sheet.frames[0];
                 float scale = CollectibleSpritePx / (float)Mathf.Max(f.width, f.height);
-                // Contorno amarillo de 1 px (Fase 7): el "componente" gris apenas se veía sobre el fondo de la zona 3.
+                // Contorno amarillo de 1 px: sin él, el "componente" gris apenas se ve sobre el fondo de la zona 3.
                 var sprite = SpriteExtractor.AddOutline(SpriteExtractor.Downscale(sheet, f, scale), Yellow);
                 SpriteExtractor.SavePng(sprite, CollectibleSpritePath(name));
             }

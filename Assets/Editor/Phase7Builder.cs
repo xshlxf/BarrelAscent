@@ -17,14 +17,14 @@ using Object = UnityEngine.Object;
 namespace BarrelAscent.EditorTools
 {
     /// <summary>
-    /// Fase 7: arte definitivo y audio.
+    /// Arte definitivo y audio (cadena completa de construcción):
     ///  1. Personaje (ArtSource/01_Character): fotogramas a 32 PPU con los pies en el pivote, clips y Animator.
     ///  2. Tileset (factory_tileset.png): viga con franjas (extremos izq./der. + tramo central) y escalera.
     ///  3. Fondos por zona (factory_background_zone_0X.jpg) reducidos y oscurecidos en los bordes.
     ///  4. Efectos (ArtSource/05_Effects): polvo, destrucción de barril, recogida, daño.
     ///  5. Meta con la baliza amarilla de factory_decorations.png.
-    ///  6. Reconstruye las fases 3–5, aplica todo a GameLevel, añade EffectsManager y AudioManager,
-    ///     y vuelve a construir la UI (Fase 6).
+    ///  6. Ejecuta Phase5Builder, aplica todo a GameLevel, añade EffectsManager y AudioManager,
+    ///     y vuelve a construir la UI (Phase6Builder).
     /// Menú: Barrel Ascent/Setup/Build Phase 7 (Art + Audio).
     /// Batchmode: -executeMethod BarrelAscent.EditorTools.Phase7Builder.Build
     /// Todas las coordenadas de recorte están en píxeles de Unity (origen abajo a la izquierda).
@@ -116,13 +116,11 @@ namespace BarrelAscent.EditorTools
             ApplyGoalSprite();
             WireScene();
             Phase6Builder.Build();   // la UI depende de los managers de GameLevel
-            WireMainMenuAudio();     // después de la Fase 6, que rehace la UI del menú
+            WireMainMenuAudio();     // después de Phase6Builder, que rehace la UI del menú
             Debug.Log("[Phase7Builder] Phase 7 build complete.");
         }
 
-        // =====================================================================
-        // Personaje
-        // =====================================================================
+        // ---------------- Personaje ----------------
 
         static void ImportCharacter()
         {
@@ -318,9 +316,7 @@ namespace BarrelAscent.EditorTools
             foreach (var c in conds) t.AddCondition(c.m, c.v, c.p);
         }
 
-        // =====================================================================
-        // Tileset: plataformas y escalera
-        // =====================================================================
+        // ---------------- Tileset: plataformas y escalera ----------------
 
         static void ImportTiles()
         {
@@ -370,7 +366,7 @@ namespace BarrelAscent.EditorTools
                 EditorUtility.SetDirty(tile);
             }
 
-            // El tile placeholder de la Fase 3 pasa a usar el tramo central (por si se reconstruye sin la Fase 7).
+            // El tile placeholder también usa el tramo central, por si se reconstruye solo con Phase5Builder.
             var ph = AssetDatabase.LoadAssetAtPath<Tile>(Phase3Builder.PlatformTilePath);
             if (ph != null)
             {
@@ -387,13 +383,11 @@ namespace BarrelAscent.EditorTools
             finally { PrefabUtility.UnloadPrefabContents(root); }
         }
 
-        // =====================================================================
-        // Fondos
-        // =====================================================================
+        // ---------------- Fondos ----------------
 
         static string BackgroundSprite(int zone) => $"{EnvSpriteDir}/bg_zone{zone + 1}.png";
 
-        /// <summary>Altura (en tiles) que cubre cada zona, igual que los paneles de la Fase 3.</summary>
+        /// <summary>Altura (en tiles) que cubre cada zona, igual que los paneles de fondo de Phase3Builder.</summary>
         static (float bottom, float top) ZoneSpan(Phase3Builder.LevelLayout layout, int z)
         {
             float[] starts = layout.ZoneStartsY();
@@ -443,9 +437,7 @@ namespace BarrelAscent.EditorTools
             }
         }
 
-        // =====================================================================
-        // Efectos
-        // =====================================================================
+        // ---------------- Efectos ----------------
 
         static string EffectSprite(string name, int i) => $"{EffectSpriteDir}/fx_{name}_{i}.png";
 
@@ -487,9 +479,7 @@ namespace BarrelAscent.EditorTools
             return list.ToArray();
         }
 
-        // =====================================================================
-        // Meta
-        // =====================================================================
+        // ---------------- Meta ----------------
 
         /// <summary>
         /// Meta 32×64: mástil y bandera a cuadros (dibujados, como antes) rematados con la baliza amarilla
@@ -543,9 +533,7 @@ namespace BarrelAscent.EditorTools
             finally { PrefabUtility.UnloadPrefabContents(root); }
         }
 
-        // =====================================================================
-        // Escena
-        // =====================================================================
+        // ---------------- Escena ----------------
 
         static void WireScene()
         {
@@ -573,7 +561,7 @@ namespace BarrelAscent.EditorTools
             SetSequence(so, "damage", EffectFrames("impact"), 14f, new Vector2(0f, 0.5f));
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            // Audio (Assets/Audio, aportado por el usuario).
+            // Audio (Assets/Audio).
             var audioGo = new GameObject("AudioManager");
             audioGo.transform.SetParent(managers, false);
             var audio = audioGo.AddComponent<AudioManager>();
@@ -589,9 +577,7 @@ namespace BarrelAscent.EditorTools
             EditorSceneManager.SaveScene(scene);
         }
 
-        // =====================================================================
-        // Audio
-        // =====================================================================
+        // ---------------- Audio ----------------
 
         const string MusicDir = "Assets/Audio/Music";
         const string SfxDir = "Assets/Audio/SFX";

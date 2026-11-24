@@ -18,19 +18,6 @@ namespace BarrelAscent.Effects
 
         void Awake() => spriteRenderer = GetComponent<SpriteRenderer>();
 
-        public void Play(Sprite[] sequence, float fps, Vector3 position, bool flipX, int sortingOrder)
-        {
-            if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
-            frames = sequence;
-            frameTime = 1f / Mathf.Max(1f, fps);
-            elapsed = 0f;
-            transform.position = position;
-            spriteRenderer.flipX = flipX;
-            spriteRenderer.sortingOrder = sortingOrder;
-            spriteRenderer.sprite = frames.Length > 0 ? frames[0] : null;
-            gameObject.SetActive(true);
-        }
-
         void Update()
         {
             if (frames == null) return;
@@ -43,6 +30,19 @@ namespace BarrelAscent.Effects
                 return;
             }
             spriteRenderer.sprite = frames[index];
+        }
+
+        public void Play(Sprite[] sequence, float fps, Vector3 position, bool flipX, int sortingOrder)
+        {
+            if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
+            frames = sequence;
+            frameTime = 1f / Mathf.Max(1f, fps);
+            elapsed = 0f;
+            transform.position = position;
+            spriteRenderer.flipX = flipX;
+            spriteRenderer.sortingOrder = sortingOrder;
+            spriteRenderer.sprite = frames.Length > 0 ? frames[0] : null;
+            gameObject.SetActive(true);
         }
     }
 }

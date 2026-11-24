@@ -3,9 +3,8 @@ using UnityEngine;
 namespace BarrelAscent.Environment
 {
     /// <summary>
-    /// Seguimiento vertical suave del jugador. La X queda fija en el centro del nivel y la Y
-    /// se limita para no mostrar nada por debajo de <see cref="minY"/> ni por encima de <see cref="maxY"/>.
-    /// Se ejecuta en LateUpdate, después de que el jugador se haya movido.
+    /// Seguimiento vertical suave del jugador. La X queda fija en el centro del nivel y la Y se
+    /// limita a [<see cref="minY"/>, <see cref="maxY"/>]. Va en LateUpdate, tras moverse el jugador.
     /// </summary>
     [RequireComponent(typeof(Camera))]
     public class CameraFollow : MonoBehaviour
@@ -33,6 +32,7 @@ namespace BarrelAscent.Environment
         public Transform Target { get => target; set => target = value; }
         public float MinY => minY;
         public float MaxY => maxY;
+        float HalfHeight => cam != null ? cam.orthographicSize : 5.625f;
 
         void Awake()
         {
@@ -49,11 +49,17 @@ namespace BarrelAscent.Environment
             if (target == null) return;
 
             float desired = ClampY(target.position.y + lookAheadY);
-            // El suavizado trabaja sobre una Y sin redondear; solo la posición final se ajusta a píxel.
-            // Si se suavizara desde la posición ya redondeada, con FPS altos cada paso sería menor
-            // que medio píxel y la cámara se quedaría atascada.
+            // Se suaviza una Y sin redondear; solo la posición final se ajusta a píxel. Desde la Y
+            // redondeada, con FPS altos cada paso sería menor que medio píxel y la cámara se atascaría.
             smoothedY = ClampY(Mathf.SmoothDamp(smoothedY, desired, ref velocityY, smoothTime));
             SetPosition(smoothedY);
+        }
+
+        void OnDrawGizmosSelected()
+        {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawLine(new Vector3(levelCenterX - 10f, minY), new Vector3(levelCenterX + 10f, minY));
+            Gizmos.DrawLine(new Vector3(levelCenterX - 10f, maxY), new Vector3(levelCenterX + 10f, maxY));
         }
 
         /// <summary>Coloca la cámara directamente sobre el objetivo, sin suavizado (inicio, reaparición).</summary>
@@ -73,8 +79,6 @@ namespace BarrelAscent.Environment
             maxY = top;
         }
 
-        float HalfHeight => cam != null ? cam.orthographicSize : 5.625f;
-
         float ClampY(float y)
         {
             float low = minY + HalfHeight;
@@ -92,13 +96,6 @@ namespace BarrelAscent.Environment
                 y = Mathf.Round(y * pixelsPerUnit) / pixelsPerUnit;
             }
             transform.position = new Vector3(x, y, transform.position.z);
-        }
-
-        void OnDrawGizmosSelected()
-        {
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawLine(new Vector3(levelCenterX - 10f, minY), new Vector3(levelCenterX + 10f, minY));
-            Gizmos.DrawLine(new Vector3(levelCenterX - 10f, maxY), new Vector3(levelCenterX + 10f, maxY));
         }
     }
 }

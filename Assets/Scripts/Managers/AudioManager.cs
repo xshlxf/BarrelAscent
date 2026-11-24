@@ -7,11 +7,9 @@ using UnityEngine.UI;
 namespace BarrelAscent.Managers
 {
     /// <summary>
-    /// Sonido del juego. Escucha los eventos existentes y reproduce el clip asignado a cada uno.
-    /// Todas las ranuras son opcionales: el paquete de recursos no incluye audio, así que un clip
-    /// vacío simplemente no suena. Los clips los asigna Phase7Builder (Assets/Audio).
-    /// Se usa en las dos escenas: en MainMenu solo tiene música y clic de botón (las referencias
-    /// de juego quedan vacías y sus eventos se ignoran).
+    /// Sonido del juego: escucha los eventos de los demás sistemas y reproduce el clip de cada uno.
+    /// Todas las ranuras son opcionales (un clip vacío no suena). En MainMenu solo hay música y
+    /// clic de botón; las referencias de juego quedan vacías.
     /// </summary>
     public class AudioManager : MonoBehaviour
     {
@@ -39,10 +37,10 @@ namespace BarrelAscent.Managers
         [SerializeField] AudioClip uiClick;
         [SerializeField, Range(0f, 1f)] float sfxVolume = 0.8f;
 
-        AudioSource musicSource;
-        AudioSource sfxSource;
         // El clic de un botón que cambia de escena se cortaría con la escena: va en una fuente persistente.
         static AudioSource uiSource;
+        AudioSource musicSource;
+        AudioSource sfxSource;
 
         /// <summary>Último clip pedido (aunque esté vacío). Útil para pruebas.</summary>
         public string LastRequested { get; private set; }
@@ -64,18 +62,6 @@ namespace BarrelAscent.Managers
             sfxSource.playOnAwake = false;
         }
 
-        void Start()
-        {
-            foreach (var button in FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-                button.onClick.AddListener(OnUiClick);
-
-            if (music != null)
-            {
-                musicSource.clip = music;
-                musicSource.Play();
-            }
-        }
-
         void OnEnable()
         {
             if (player != null)
@@ -88,6 +74,18 @@ namespace BarrelAscent.Managers
             if (gameManager != null) gameManager.StateChanged += OnStateChanged;
             BarrelController.AnyDestroyed += OnBarrelDestroyed;
             Collectible.AnyCollected += OnCollected;
+        }
+
+        void Start()
+        {
+            foreach (var button in FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                button.onClick.AddListener(OnUiClick);
+
+            if (music != null)
+            {
+                musicSource.clip = music;
+                musicSource.Play();
+            }
         }
 
         void OnDisable()
@@ -110,21 +108,6 @@ namespace BarrelAscent.Managers
         void OnZoneCompleted(int zone) => Play(zoneComplete, nameof(zoneComplete));
         void OnCollected(Collectible c) => Play(collect, nameof(collect));
 
-        void OnUiClick()
-        {
-            LastRequested = nameof(uiClick);
-            if (uiClick == null) return;
-            if (uiSource == null)
-            {
-                var go = new GameObject("UiAudio");
-                DontDestroyOnLoad(go);
-                uiSource = go.AddComponent<AudioSource>();
-                uiSource.playOnAwake = false;
-                uiSource.ignoreListenerPause = true;
-            }
-            uiSource.PlayOneShot(uiClick, sfxVolume);
-        }
-
         void OnBarrelDestroyed(BarrelController barrel, bool byPlayer)
         {
             if (byPlayer) Play(barrelSmash, nameof(barrelSmash));
@@ -139,6 +122,21 @@ namespace BarrelAscent.Managers
                 case GameManager.GameState.Won: musicSource.Stop(); Play(victory, nameof(victory)); break;
                 case GameManager.GameState.Lost: musicSource.Stop(); Play(gameOver, nameof(gameOver)); break;
             }
+        }
+
+        void OnUiClick()
+        {
+            LastRequested = nameof(uiClick);
+            if (uiClick == null) return;
+            if (uiSource == null)
+            {
+                var go = new GameObject("UiAudio");
+                DontDestroyOnLoad(go);
+                uiSource = go.AddComponent<AudioSource>();
+                uiSource.playOnAwake = false;
+                uiSource.ignoreListenerPause = true;
+            }
+            uiSource.PlayOneShot(uiClick, sfxVolume);
         }
 
         void Play(AudioClip clip, string slot)

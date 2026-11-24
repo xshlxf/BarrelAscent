@@ -7,9 +7,8 @@ using UnityEngine.InputSystem;
 namespace BarrelAscent.Player
 {
     /// <summary>
-    /// Movimiento del jugador: desplazamiento horizontal, salto (uno por contacto con el suelo),
-    /// detección de suelo, escaleras y parámetros del Animator.
-    /// La física (gravedad, colisiones) la resuelve Rigidbody2D; este script solo fija velocidades.
+    /// Movimiento del jugador: desplazamiento horizontal, salto, escaleras y parámetros del Animator.
+    /// La física la resuelve Rigidbody2D; este script solo fija velocidades.
     /// </summary>
     [RequireComponent(typeof(Rigidbody2D), typeof(CapsuleCollider2D))]
     public class PlayerController : MonoBehaviour
@@ -18,6 +17,13 @@ namespace BarrelAscent.Player
         const float ClimbStartThreshold = 0.5f;
         const float LadderEdgeMargin = 0.05f;
         const float LandingClearance = 0.02f;
+
+        static readonly int SpeedHash = Animator.StringToHash("Speed");
+        static readonly int GroundedHash = Animator.StringToHash("Grounded");
+        static readonly int ClimbingHash = Animator.StringToHash("Climbing");
+        static readonly int ClimbSpeedHash = Animator.StringToHash("ClimbSpeed");
+        static readonly int VelocityYHash = Animator.StringToHash("VelocityY");
+        static readonly int HurtHash = Animator.StringToHash("Hurt");
 
         [Header("Movimiento")]
         [SerializeField] float moveSpeed = 5f;
@@ -46,13 +52,6 @@ namespace BarrelAscent.Player
         [SerializeField] InputActionAsset inputActions;
         [Tooltip("Tiempo que se muestra la pose de daño tras un golpe (s).")]
         [SerializeField] float hurtPoseTime = 0.4f;
-
-        static readonly int SpeedHash = Animator.StringToHash("Speed");
-        static readonly int GroundedHash = Animator.StringToHash("Grounded");
-        static readonly int ClimbingHash = Animator.StringToHash("Climbing");
-        static readonly int ClimbSpeedHash = Animator.StringToHash("ClimbSpeed");
-        static readonly int VelocityYHash = Animator.StringToHash("VelocityY");
-        static readonly int HurtHash = Animator.StringToHash("Hurt");
 
         Rigidbody2D body;
         CapsuleCollider2D bodyCollider;
@@ -98,7 +97,7 @@ namespace BarrelAscent.Player
 
             ladderFilter = new ContactFilter2D { useTriggers = true, useLayerMask = true, layerMask = ladderMask };
 
-            // El parámetro "Hurt" lo añade la Fase 7; con un Animator anterior simplemente no se usa.
+            // "Hurt" es opcional: un Animator sin ese parámetro simplemente no muestra la pose de daño.
             if (animator != null && animator.runtimeAnimatorController != null)
                 foreach (var p in animator.parameters)
                     if (p.nameHash == HurtHash) animatorHasHurt = true;
@@ -107,32 +106,6 @@ namespace BarrelAscent.Player
         void OnEnable()
         {
             BindActions(inputActions != null ? inputActions : InputSystem.actions);
-        }
-
-        /// <summary>
-        /// Sustituye las acciones de entrada en tiempo de ejecución (p. ej. pruebas automáticas
-        /// con un teclado simulado, donde las Project-wide Actions no están disponibles).
-        /// </summary>
-        public void SetInputActions(InputActionAsset asset)
-        {
-            inputActions = asset;
-            BindActions(asset);
-        }
-
-        void BindActions(InputActionAsset asset)
-        {
-            moveAction = null;
-            jumpAction = null;
-            if (asset == null)
-            {
-                Debug.LogWarning("[PlayerController] No hay Input Actions asignadas ni Project-wide Actions; el jugador no responderá.", this);
-                return;
-            }
-
-            moveAction = asset.FindAction("Player/Move", throwIfNotFound: true);
-            jumpAction = asset.FindAction("Player/Jump", throwIfNotFound: true);
-            moveAction.Enable();
-            jumpAction.Enable();
         }
 
         void Update()
@@ -174,6 +147,101 @@ namespace BarrelAscent.Player
 
             body.linearVelocity = new Vector2(moveInput.x * moveSpeed, body.linearVelocity.y);
             TryJump();
+        }
+
+        void OnDrawGizmosSelected()
+        {
+            var c = GetComponent<CapsuleCollider2D>();
+            if (c == null) return;
+            Bounds b = c.bounds;
+            Gizmos.color = IsGrounded ? Color.green : Color.red;
+            Gizmos.DrawWireCube(new Vector3(b.center.x, b.min.y - groundCheckDepth * 0.5f),
+                                new Vector3(b.size.x * 0.9f, groundCheckDepth));
+        }
+
+        // ---------- API pública (daño, reaparición, fin de partida, pruebas) ----------
+
+        /// <summary>Sustituye las acciones de entrada en tiempo de ejecución (pruebas con teclado simulado).</summary>
+        public void SetInputActions(InputActionAsset asset)
+        {
+            inputActions = asset;
+            BindActions(asset);
+        }
+
+        /// <summary>Activa o bloquea la entrada del jugador (pausa, victoria, game over, reaparición).</summary>
+        public void SetControlEnabled(bool value)
+        {
+            ControlEnabled = value;
+            if (!value)
+            {
+                moveInput = Vector2.zero;
+                jumpRequestTime = float.NegativeInfinity;
+                body.linearVelocity = new Vector2(0f, body.linearVelocity.y);
+            }
+        }
+
+        /// <summary>
+        /// Impulso vertical tras destruir un barril. No concede un salto: solo se puede volver a
+        /// saltar al tocar el suelo.
+        /// </summary>
+        public void Bounce(float verticalVelocity)
+        {
+            StopClimbing();
+            body.linearVelocity = new Vector2(body.linearVelocity.x, verticalVelocity);
+            lastGroundedTime = float.NegativeInfinity;
+            jumpRequestTime = float.NegativeInfinity;
+            IsGrounded = false;
+        }
+
+        /// <summary>Retroceso al recibir daño: fija la velocidad y bloquea el control horizontal un instante.</summary>
+        public void Knockback(Vector2 velocity, float duration = 0.25f)
+        {
+            StopClimbing();
+            body.linearVelocity = velocity;
+            knockbackUntil = Time.time + duration;
+            hurtUntil = Time.time + Mathf.Max(duration, hurtPoseTime);
+            lastGroundedTime = float.NegativeInfinity;
+            IsGrounded = false;
+        }
+
+        /// <summary>Coloca al jugador en un punto, sin velocidad y fuera de cualquier escalera.</summary>
+        public void Teleport(Vector2 position)
+        {
+            StopClimbing();
+            body.position = position;
+            transform.position = position;
+            body.linearVelocity = Vector2.zero;
+            lastGroundedTime = float.NegativeInfinity;
+            hurtUntil = float.NegativeInfinity;
+        }
+
+        /// <summary>Sale de la escalera y restaura gravedad y colisiones. Seguro de llamar siempre.</summary>
+        public void StopClimbing()
+        {
+            if (!IsClimbing) return;
+            IsClimbing = false;
+            currentLadder = null;
+            body.gravityScale = gravityScale;
+            body.excludeLayers = 0;
+            body.linearVelocity = Vector2.zero;
+        }
+
+        // ---------- Entrada ----------
+
+        void BindActions(InputActionAsset asset)
+        {
+            moveAction = null;
+            jumpAction = null;
+            if (asset == null)
+            {
+                Debug.LogWarning("[PlayerController] No hay Input Actions asignadas ni Project-wide Actions; el jugador no responderá.", this);
+                return;
+            }
+
+            moveAction = asset.FindAction("Player/Move", throwIfNotFound: true);
+            jumpAction = asset.FindAction("Player/Jump", throwIfNotFound: true);
+            moveAction.Enable();
+            jumpAction.Enable();
         }
 
         // ---------- Suelo y salto ----------
@@ -293,66 +361,6 @@ namespace BarrelAscent.Player
             StopClimbing();
         }
 
-        /// <summary>Sale de la escalera y restaura gravedad y colisiones. Seguro de llamar siempre.</summary>
-        public void StopClimbing()
-        {
-            if (!IsClimbing) return;
-            IsClimbing = false;
-            currentLadder = null;
-            body.gravityScale = gravityScale;
-            body.excludeLayers = 0;
-            body.linearVelocity = Vector2.zero;
-        }
-
-        // ---------- API para otros sistemas (daño, reaparición, fin de partida) ----------
-
-        /// <summary>Activa o bloquea la entrada del jugador (pausa, victoria, game over, reaparición).</summary>
-        public void SetControlEnabled(bool value)
-        {
-            ControlEnabled = value;
-            if (!value)
-            {
-                moveInput = Vector2.zero;
-                jumpRequestTime = float.NegativeInfinity;
-                body.linearVelocity = new Vector2(0f, body.linearVelocity.y);
-            }
-        }
-
-        /// <summary>
-        /// Impulso vertical tras destruir un barril. No consume ni concede un salto: tras el rebote
-        /// solo se puede volver a saltar al tocar el suelo.
-        /// </summary>
-        public void Bounce(float verticalVelocity)
-        {
-            StopClimbing();
-            body.linearVelocity = new Vector2(body.linearVelocity.x, verticalVelocity);
-            lastGroundedTime = float.NegativeInfinity;
-            jumpRequestTime = float.NegativeInfinity;
-            IsGrounded = false;
-        }
-
-        /// <summary>Retroceso al recibir daño: fija la velocidad y bloquea el control horizontal un instante.</summary>
-        public void Knockback(Vector2 velocity, float duration = 0.25f)
-        {
-            StopClimbing();
-            body.linearVelocity = velocity;
-            knockbackUntil = Time.time + duration;
-            hurtUntil = Time.time + Mathf.Max(duration, hurtPoseTime);
-            lastGroundedTime = float.NegativeInfinity;
-            IsGrounded = false;
-        }
-
-        /// <summary>Coloca al jugador en un punto, sin velocidad y fuera de cualquier escalera.</summary>
-        public void Teleport(Vector2 position)
-        {
-            StopClimbing();
-            body.position = position;
-            transform.position = position;
-            body.linearVelocity = Vector2.zero;
-            lastGroundedTime = float.NegativeInfinity;
-            hurtUntil = float.NegativeInfinity;
-        }
-
         // ---------- Presentación ----------
 
         void UpdateFacing()
@@ -371,16 +379,6 @@ namespace BarrelAscent.Player
             animator.SetFloat(ClimbSpeedHash, IsClimbing ? Mathf.Abs(moveInput.y) : 0f);
             animator.SetFloat(VelocityYHash, body.linearVelocity.y);
             if (animatorHasHurt) animator.SetBool(HurtHash, Time.time < hurtUntil);
-        }
-
-        void OnDrawGizmosSelected()
-        {
-            var c = GetComponent<CapsuleCollider2D>();
-            if (c == null) return;
-            Bounds b = c.bounds;
-            Gizmos.color = IsGrounded ? Color.green : Color.red;
-            Gizmos.DrawWireCube(new Vector3(b.center.x, b.min.y - groundCheckDepth * 0.5f),
-                                new Vector3(b.size.x * 0.9f, groundCheckDepth));
         }
     }
 }

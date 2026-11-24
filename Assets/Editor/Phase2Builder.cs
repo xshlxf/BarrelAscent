@@ -9,12 +9,12 @@ using UnityEngine;
 namespace BarrelAscent.EditorTools
 {
     /// <summary>
-    /// Fase 2: capas de física, sprites placeholder, Animator del jugador, prefab Player
+    /// Capas de física, sprites placeholder, Animator del jugador, prefab Player
     /// y una zona de pruebas en GameLevel (suelo, plataformas, escaleras, obstáculo).
     /// Menú: Barrel Ascent/Setup/Build Phase 2 (Player + Test Area).
     /// Batchmode: -executeMethod BarrelAscent.EditorTools.Phase2Builder.Build
     /// Reejecutable: reconstruye la zona de pruebas y el jugador de la escena.
-    /// Los sprites PH_* son placeholders claramente identificados y se sustituirán en la Fase 7.
+    /// Los sprites PH_* son placeholders; Phase7Builder los sustituye por el arte definitivo.
     /// </summary>
     public static class Phase2Builder
     {
@@ -309,7 +309,7 @@ namespace BarrelAscent.EditorTools
         {
             var scene = EditorSceneManager.OpenScene(ProjectSetup.GameLevelScene, OpenSceneMode.Single);
 
-            // Si ya existe el nivel real (Fase 3), no volver a crear la zona de pruebas.
+            // Si ya existe el nivel real (Phase3Builder), no volver a crear la zona de pruebas.
             foreach (var go in scene.GetRootGameObjects())
                 if (go.name == "Level")
                 {

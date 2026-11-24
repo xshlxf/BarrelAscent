@@ -32,9 +32,25 @@ namespace BarrelAscent.Environment
             area.isTrigger = true;
         }
 
+        void Reset()
+        {
+            GetComponent<BoxCollider2D>().isTrigger = true;
+        }
+
+        void OnDrawGizmos()
+        {
+            var box = GetComponent<BoxCollider2D>();
+            if (box == null) return;
+            var b = box.bounds;
+            Gizmos.color = new Color(0.9f, 0.78f, 0.42f, 0.8f); // #E6C66B
+            Gizmos.DrawWireCube(b.center, b.size);
+            float top = b.max.y - topExtension;
+            Gizmos.DrawLine(new Vector3(b.min.x, top), new Vector3(b.max.x, top));
+        }
+
         /// <summary>
-        /// Ajusta sprite y trigger a una altura dada (de superficie inferior a superficie superior),
-        /// con el pivote del objeto en la base. Usado por el constructor de nivel.
+        /// Ajusta sprite y trigger a una altura dada (de superficie a superficie), con el pivote
+        /// en la base. Lo usa el constructor de nivel.
         /// </summary>
         public void Configure(float height)
         {
@@ -50,22 +66,6 @@ namespace BarrelAscent.Environment
                 sr.size = new Vector2(1f, height);
                 sr.transform.localPosition = new Vector3(0f, height * 0.5f, 0f);
             }
-        }
-
-        void Reset()
-        {
-            GetComponent<BoxCollider2D>().isTrigger = true;
-        }
-
-        void OnDrawGizmos()
-        {
-            var box = GetComponent<BoxCollider2D>();
-            if (box == null) return;
-            var b = box.bounds;
-            Gizmos.color = new Color(0.9f, 0.78f, 0.42f, 0.8f); // #E6C66B
-            Gizmos.DrawWireCube(b.center, b.size);
-            float top = b.max.y - topExtension;
-            Gizmos.DrawLine(new Vector3(b.min.x, top), new Vector3(b.max.x, top));
         }
     }
 }

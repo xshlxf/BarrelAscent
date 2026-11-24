@@ -17,7 +17,7 @@ using UnityEngine.UI;
 
 namespace BarrelAscent.Tests
 {
-    /// <summary>Pruebas de la Fase 6: menú principal, HUD y paneles de pausa, Game Over y victoria.</summary>
+    /// <summary>Interfaz: menú principal, HUD y paneles de pausa, Game Over y victoria.</summary>
     public class UITests : InputTestFixture
     {
         const string ActionsPath = "Assets/Settings/BarrelAscentControls.inputactions";

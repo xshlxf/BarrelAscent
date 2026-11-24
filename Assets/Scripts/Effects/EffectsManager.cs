@@ -35,6 +35,11 @@ namespace BarrelAscent.Effects
 
         readonly List<SpriteEffect> pool = new List<SpriteEffect>();
 
+        public EffectSequence Dust => dust;
+        public EffectSequence BarrelSmash => barrelSmash;
+        public EffectSequence Collect => collect;
+        public EffectSequence Damage => damage;
+
         void Awake()
         {
             if (player == null) player = FindFirstObjectByType<PlayerController>();
@@ -66,6 +71,15 @@ namespace BarrelAscent.Effects
             Collectible.AnyCollected -= OnCollected;
         }
 
+        /// <summary>Reproduce una secuencia en una posición del mundo.</summary>
+        public SpriteEffect Spawn(EffectSequence sequence, Vector3 position, bool flipX)
+        {
+            if (sequence == null || sequence.frames == null || sequence.frames.Length == 0) return null;
+            var fx = GetFree();
+            fx.Play(sequence.frames, sequence.fps, position + (Vector3)sequence.offset, flipX, sortingOrder);
+            return fx;
+        }
+
         void OnJumped() => Spawn(dust, player.transform.position, !player.FacingRight);
         void OnLanded() => Spawn(dust, player.transform.position, false);
         void OnDamaged() => Spawn(damage, player.transform.position, false);
@@ -76,20 +90,6 @@ namespace BarrelAscent.Effects
         }
 
         void OnCollected(Collectible c) => Spawn(collect, c.transform.position, false);
-
-        /// <summary>Reproduce una secuencia en una posición del mundo. Público para pruebas y usos futuros.</summary>
-        public SpriteEffect Spawn(EffectSequence sequence, Vector3 position, bool flipX)
-        {
-            if (sequence == null || sequence.frames == null || sequence.frames.Length == 0) return null;
-            var fx = GetFree();
-            fx.Play(sequence.frames, sequence.fps, position + (Vector3)sequence.offset, flipX, sortingOrder);
-            return fx;
-        }
-
-        public EffectSequence Dust => dust;
-        public EffectSequence BarrelSmash => barrelSmash;
-        public EffectSequence Collect => collect;
-        public EffectSequence Damage => damage;
 
         SpriteEffect GetFree()
         {

@@ -17,7 +17,7 @@ using UnityEngine.UI;
 namespace BarrelAscent.Tests
 {
     /// <summary>
-    /// Pruebas de la Fase 7: el arte definitivo está conectado (sin placeholders en el jugador,
+    /// Arte y audio: el arte definitivo está conectado (sin placeholders en el jugador,
     /// Animator con clips) y los eventos de juego disparan efectos y peticiones de sonido.
     /// </summary>
     public class ArtAudioTests : InputTestFixture

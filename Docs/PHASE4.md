@@ -86,8 +86,8 @@ Nuevas:
 | Barriles en todas las zonas a la vez | El LevelManager no tiene asignados los spawners o el jugador. |
 
 ## Criterios de finalización
-Criterios 7–11 del documento maestro: aparecen solos ✅ · ruedan y caen ✅ · dañan ✅ ·
-se destruyen al aterrizar encima ✅ · rebote ✅. Criterio 14 (invulnerabilidad) ✅. La dificultad por zona ya
+Criterios 7–11 del documento maestro cumplidos: aparecen solos · ruedan y caen · dañan ·
+se destruyen al aterrizar encima · rebote. Criterio 14 (invulnerabilidad). La dificultad por zona ya
 está activa (criterio 16, se completará con la progresión de la Fase 5).
 
 ---

@@ -77,5 +77,5 @@ Reanudar → `OnResumeButton` · Reiniciar → `OnRestartButton` · Menú → `O
 | Texto borroso | Usar tamaños múltiplos de 9 y resoluciones múltiplo de 640×360. |
 
 ## Criterios de finalización
-Menú principal ✅ · HUD ✅ · Pausa ✅ · Game Over ✅ · Victoria ✅ · Reinicio desde UI y con R ✅.
+Menú principal · HUD · Pausa · Game Over · Victoria · Reinicio desde UI y con R.
 Pendiente (Fase 7): personaje, tileset y fondos definitivos, efectos y audio.

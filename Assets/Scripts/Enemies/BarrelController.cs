@@ -1,21 +1,18 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 namespace BarrelAscent.Enemies
 {
     /// <summary>
     /// Barril autónomo con máquina de estados SPAWNED → ROLLING ⇄ FALLING → DESTROYED.
-    /// El código decide el comportamiento (dirección, velocidad, transiciones); la física de
-    /// Rigidbody2D resuelve la gravedad y las caídas. El suelo y las paredes se detectan con
-    /// consultas 2D (OverlapBox / Raycast) sobre la capa Ground.
+    /// El código decide dirección, velocidad y transiciones; Rigidbody2D resuelve gravedad y caídas.
+    /// Suelo y paredes se detectan con OverlapBox / Raycast sobre la capa Ground.
     /// </summary>
     [RequireComponent(typeof(Rigidbody2D), typeof(CircleCollider2D))]
     public class BarrelController : MonoBehaviour
     {
         public enum State { Spawned, Rolling, Falling, Destroyed }
-
-        /// <summary>Se lanza una sola vez cuando un barril se destruye. El bool indica si fue el jugador.</summary>
-        public static event Action<BarrelController, bool> AnyDestroyed;
 
         [Header("Movimiento")]
         [SerializeField] float speed = 2f;
@@ -46,6 +43,9 @@ namespace BarrelAscent.Enemies
         float age;
         float stuckTimer;
 
+        /// <summary>Se lanza una sola vez cuando un barril se destruye. El bool indica si fue el jugador.</summary>
+        public static event Action<BarrelController, bool> AnyDestroyed;
+
         public State CurrentState { get; private set; } = State.Spawned;
         public int Direction => direction;
         public float Speed => speed;
@@ -60,14 +60,6 @@ namespace BarrelAscent.Enemies
             body.freezeRotation = true; // la rotación visual la hace el hijo "visual"
             if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
             if (visual == null && spriteRenderer != null) visual = spriteRenderer.transform;
-        }
-
-        /// <summary>Configura velocidad y sentido al aparecer (lo llama BarrelSpawner).</summary>
-        public void Launch(float newSpeed, int newDirection)
-        {
-            speed = newSpeed;
-            direction = newDirection >= 0 ? 1 : -1;
-            EnterState(State.Spawned);
         }
 
         void FixedUpdate()
@@ -122,6 +114,41 @@ namespace BarrelAscent.Enemies
             RotateVisual(dt);
         }
 
+        void OnDrawGizmosSelected()
+        {
+            var c = GetComponent<CircleCollider2D>();
+            if (c == null) return;
+            Bounds b = c.bounds;
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireCube(new Vector3(b.center.x, b.min.y - groundCheckDepth * 0.5f),
+                                new Vector3(b.extents.x * 0.5f, groundCheckDepth));
+            Gizmos.DrawLine(new Vector3(b.center.x + direction * b.extents.x, b.center.y),
+                            new Vector3(b.center.x + direction * (b.extents.x + 0.06f), b.center.y));
+        }
+
+        /// <summary>Configura velocidad y sentido al aparecer (lo llama BarrelSpawner).</summary>
+        public void Launch(float newSpeed, int newDirection)
+        {
+            speed = newSpeed;
+            direction = newDirection >= 0 ? 1 : -1;
+            EnterState(State.Spawned);
+        }
+
+        /// <summary>Destrucción por el jugador (aterrizó encima). Solo cuenta una vez.</summary>
+        public bool Smash()
+        {
+            if (CurrentState == State.Destroyed) return false;
+            Destroy(byPlayer: true);
+            return true;
+        }
+
+        /// <summary>Eliminación sin recompensa (fuera del nivel, contra una pared, atascado).</summary>
+        public void Despawn()
+        {
+            if (CurrentState == State.Destroyed) return;
+            Destroy(byPlayer: false);
+        }
+
         void EnterState(State next)
         {
             CurrentState = next;
@@ -161,25 +188,10 @@ namespace BarrelAscent.Enemies
             visual.Rotate(0f, 0f, angularDeg * dt);
         }
 
-        /// <summary>Destrucción por el jugador (aterrizó encima). Solo cuenta una vez.</summary>
-        public bool Smash()
-        {
-            if (CurrentState == State.Destroyed) return false;
-            Destroy(byPlayer: true);
-            return true;
-        }
-
-        /// <summary>Eliminación sin recompensa (fuera del nivel, contra una pared, atascado).</summary>
-        public void Despawn()
-        {
-            if (CurrentState == State.Destroyed) return;
-            Destroy(byPlayer: false);
-        }
-
         void Destroy(bool byPlayer)
         {
             EnterState(State.Destroyed);
-            circle.enabled = false;             // ya no puede causar daño ni colisionar
+            circle.enabled = false; // ya no puede causar daño ni colisionar
             body.linearVelocity = Vector2.zero;
             body.bodyType = RigidbodyType2D.Kinematic;
 
@@ -197,7 +209,7 @@ namespace BarrelAscent.Enemies
             }
         }
 
-        System.Collections.IEnumerator FadeAndRemove()
+        IEnumerator FadeAndRemove()
         {
             float t = 0f;
             Color c = spriteRenderer.color;
@@ -208,18 +220,6 @@ namespace BarrelAscent.Enemies
                 yield return null;
             }
             UnityEngine.Object.Destroy(gameObject);
-        }
-
-        void OnDrawGizmosSelected()
-        {
-            var c = GetComponent<CircleCollider2D>();
-            if (c == null) return;
-            Bounds b = c.bounds;
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireCube(new Vector3(b.center.x, b.min.y - groundCheckDepth * 0.5f),
-                                new Vector3(b.extents.x * 0.5f, groundCheckDepth));
-            Gizmos.DrawLine(new Vector3(b.center.x + direction * b.extents.x, b.center.y),
-                            new Vector3(b.center.x + direction * (b.extents.x + 0.06f), b.center.y));
         }
     }
 }

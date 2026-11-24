@@ -200,7 +200,7 @@ namespace BarrelAscent.EditorTools.Art
             return tex;
         }
 
-        // ---------------- Fase 7 ----------------
+        // ---------------- Recorte, limpieza y composición ----------------
 
         /// <summary>
         /// Vuelve a separar los fotogramas buscando el hueco mínimo que da exactamente <paramref name="expected"/>
@@ -388,14 +388,6 @@ namespace BarrelAscent.EditorTools.Art
             tex.SetPixels32(pixels);
             tex.Apply();
             return tex;
-        }
-
-        /// <summary>Factor de escala para que el fotograma más alto mida targetHeight píxeles.</summary>
-        public static float ScaleForHeight(Sheet s, int targetHeight)
-        {
-            int maxH = 1;
-            foreach (var f in s.frames) maxH = Mathf.Max(maxH, f.height);
-            return targetHeight / (float)maxH;
         }
 
         public static void SavePng(Texture2D tex, string assetPath)

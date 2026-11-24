@@ -10,15 +10,11 @@ namespace BarrelAscent.Managers
 {
     /// <summary>
     /// Estado general de la partida: puntuación, vidas, pausa, victoria, derrota y reinicio.
-    /// Los demás sistemas le notifican (coleccionables, LevelManager, PlayerCollision) y la
-    /// interfaz escucha sus eventos; el GameManager nunca toca la UI directamente.
+    /// Los demás sistemas le notifican y la interfaz escucha sus eventos; nunca toca la UI directamente.
     /// </summary>
     public class GameManager : MonoBehaviour
     {
         public enum GameState { Playing, Paused, Won, Lost }
-
-        /// <summary>Instancia de la escena actual (null fuera de GameLevel).</summary>
-        public static GameManager Instance { get; private set; }
 
         [Header("Reglas")]
         [SerializeField] int startingLives = 3;
@@ -41,15 +37,19 @@ namespace BarrelAscent.Managers
         InputAction restartAction;
         Vector3 fallbackRespawn;
 
+        /// <summary>Instancia de la escena actual (null fuera de GameLevel).</summary>
+        public static GameManager Instance { get; private set; }
+
         public int Score { get; private set; }
         public int Lives { get; private set; }
         public int StartingLives => startingLives;
         public GameState State { get; private set; } = GameState.Playing;
+        public bool IsGameOver => State == GameState.Won || State == GameState.Lost;
 
         public event Action<int> ScoreChanged;
         public event Action<int> LivesChanged;
         public event Action<GameState> StateChanged;
-        /// <summary>Cada recompensa concedida (cantidad, motivo). Útil para textos flotantes o depuración.</summary>
+        /// <summary>Cada recompensa concedida (cantidad, motivo).</summary>
         public event Action<int, string> PointsAwarded;
 
         void Awake()
@@ -69,6 +69,15 @@ namespace BarrelAscent.Managers
                 playerCollision.Damaged += OnPlayerDamaged;
                 playerCollision.BarrelSmashed += OnBarrelSmashed;
             }
+        }
+
+        void Update()
+        {
+            if (pauseAction != null && pauseAction.WasPressedThisFrame()) TogglePause();
+            if (restartAction != null && restartAction.WasPressedThisFrame() && IsGameOver) Restart();
+
+            if (State == GameState.Playing && player != null && player.transform.position.y < fallLimitY)
+                OnPlayerFell();
         }
 
         void OnDisable()
@@ -96,29 +105,6 @@ namespace BarrelAscent.Managers
             BindActions(asset);
         }
 
-        void BindActions(InputActionAsset asset)
-        {
-            pauseAction = restartAction = null;
-            if (asset == null) return;
-            pauseAction = asset.FindAction("Game/Pause", throwIfNotFound: true);
-            restartAction = asset.FindAction("Game/Restart", throwIfNotFound: true);
-            pauseAction.Enable();
-            restartAction.Enable();
-        }
-
-        void Update()
-        {
-            if (pauseAction != null && pauseAction.WasPressedThisFrame()) TogglePause();
-            if (restartAction != null && restartAction.WasPressedThisFrame() && IsGameOver) Restart();
-
-            if (State == GameState.Playing && player != null && player.transform.position.y < fallLimitY)
-                OnPlayerFell();
-        }
-
-        public bool IsGameOver => State == GameState.Won || State == GameState.Lost;
-
-        // ---------- Puntuación ----------
-
         /// <summary>Suma puntos. Solo cuenta durante la partida (no en pausa ni tras terminar).</summary>
         public void AddScore(int amount, string reason = "")
         {
@@ -126,33 +112,6 @@ namespace BarrelAscent.Managers
             Score += amount;
             PointsAwarded?.Invoke(amount, reason);
             ScoreChanged?.Invoke(Score);
-        }
-
-        void OnBarrelSmashed(BarrelController barrel) => AddScore(barrelPoints, "Barril destruido");
-
-        // ---------- Vidas ----------
-
-        void OnPlayerDamaged()
-        {
-            if (State != GameState.Playing) return;
-            LoseLife(respawn: false); // golpe de barril: retroceso + invulnerabilidad, sin teletransporte
-        }
-
-        void OnPlayerFell()
-        {
-            LoseLife(respawn: true);
-        }
-
-        void LoseLife(bool respawn)
-        {
-            Lives = Mathf.Max(0, Lives - 1);
-            LivesChanged?.Invoke(Lives);
-            if (Lives == 0)
-            {
-                Lose();
-                return;
-            }
-            if (respawn) Respawn();
         }
 
         /// <summary>Coloca al jugador en el punto seguro de la zona más alta alcanzada.</summary>
@@ -164,8 +123,6 @@ namespace BarrelAscent.Managers
             if (cameraFollow != null) cameraFollow.SnapToTarget();
             if (playerCollision != null) playerCollision.GrantInvulnerability(respawnInvulnerability);
         }
-
-        // ---------- Estados ----------
 
         public void TogglePause()
         {
@@ -202,6 +159,54 @@ namespace BarrelAscent.Managers
             EndGame(GameState.Lost);
         }
 
+        /// <summary>Recarga GameLevel desde cero.</summary>
+        public void Restart()
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
+
+        public void LoadMainMenu()
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(mainMenuScene);
+        }
+
+        void BindActions(InputActionAsset asset)
+        {
+            pauseAction = restartAction = null;
+            if (asset == null) return;
+            pauseAction = asset.FindAction("Game/Pause", throwIfNotFound: true);
+            restartAction = asset.FindAction("Game/Restart", throwIfNotFound: true);
+            pauseAction.Enable();
+            restartAction.Enable();
+        }
+
+        void OnBarrelSmashed(BarrelController barrel) => AddScore(barrelPoints, "Barril destruido");
+
+        void OnPlayerDamaged()
+        {
+            if (State != GameState.Playing) return;
+            LoseLife(respawn: false); // golpe de barril: retroceso + invulnerabilidad, sin teletransporte
+        }
+
+        void OnPlayerFell()
+        {
+            LoseLife(respawn: true);
+        }
+
+        void LoseLife(bool respawn)
+        {
+            Lives = Mathf.Max(0, Lives - 1);
+            LivesChanged?.Invoke(Lives);
+            if (Lives == 0)
+            {
+                Lose();
+                return;
+            }
+            if (respawn) Respawn();
+        }
+
         void EndGame(GameState result)
         {
             if (player != null) player.SetControlEnabled(false);
@@ -214,19 +219,6 @@ namespace BarrelAscent.Managers
         {
             State = next;
             StateChanged?.Invoke(next);
-        }
-
-        /// <summary>Recarga GameLevel desde cero.</summary>
-        public void Restart()
-        {
-            Time.timeScale = 1f;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-        }
-
-        public void LoadMainMenu()
-        {
-            Time.timeScale = 1f;
-            SceneManager.LoadScene(mainMenuScene);
         }
     }
 }

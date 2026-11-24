@@ -13,7 +13,7 @@ using UnityEngine.TestTools;
 namespace BarrelAscent.Tests
 {
     /// <summary>
-    /// Pruebas de la Fase 4 en un escenario propio:
+    /// Pruebas de barriles en un escenario propio:
     /// suelo (superficie y = 0) de x = −15 a 15 con paredes, y una plataforma superior
     /// (superficie y = 4) de x = −10 a 0, abierta por la derecha.
     /// </summary>

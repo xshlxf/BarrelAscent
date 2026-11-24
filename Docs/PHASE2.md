@@ -64,6 +64,6 @@ Se eliminará cuando se construyan las zonas reales con Tilemap en la Fase 3.
 | Sprite borroso | Textura con Filter Mode distinto de Point (el importador lo pone solo en `Sprites/`). |
 
 ## Criterios de finalización
-Criterios 1–4 del documento maestro: movimiento ✅, salto ✅, sin doble salto ✅, escaleras ✅ —
+Criterios 1–4 del documento maestro cumplidos: movimiento, salto, sin doble salto, escaleras —
 comprobados con las pruebas automáticas. Animaciones: el Animator y sus parámetros están conectados;
 los clips se añadirán cuando llegue el arte (Fase 7).

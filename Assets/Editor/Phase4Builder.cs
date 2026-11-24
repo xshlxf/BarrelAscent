@@ -15,12 +15,12 @@ using Object = UnityEngine.Object;
 namespace BarrelAscent.EditorTools
 {
     /// <summary>
-    /// Fase 4: barriles.
+    /// Barriles:
     ///  1. Procesa el arte del barril de ArtSource/03_Enemies → Assets/Sprites/Objects/Barrel.
     ///  2. Crea ZoneConfig (Zone1..3) con los valores de balance iniciales.
     ///  3. Crea el prefab Barrel y añade PlayerCollision al prefab Player.
     ///  4. Reglas de colisión entre capas (barriles no empujan al jugador ni entre sí).
-    ///  5. Reconstruye el nivel (Fase 3) y conecta un BarrelSpawner por zona y el LevelManager.
+    ///  5. Reconstruye el nivel (Phase3Builder) y conecta un BarrelSpawner por zona y el LevelManager.
     /// Menú: Barrel Ascent/Setup/Build Phase 4 (Barrels).
     /// Batchmode: -executeMethod BarrelAscent.EditorTools.Phase4Builder.Build
     /// </summary>
