@@ -200,6 +200,196 @@ namespace BarrelAscent.EditorTools.Art
             return tex;
         }
 
+        // ---------------- Fase 7 ----------------
+
+        /// <summary>
+        /// Vuelve a separar los fotogramas buscando el hueco mínimo que da exactamente <paramref name="expected"/>
+        /// fotogramas (las tiras de efectos tienen partículas sueltas que un hueco pequeño separaría).
+        /// </summary>
+        public static void FindFramesCount(Sheet s, int expected, int minFrameSize = 24)
+        {
+            for (int gap = 160; gap >= 8; gap -= 4)
+            {
+                var frames = FindFrames(s, gap, minFrameSize);
+                if (frames.Count == expected) { s.frames = frames; return; }
+            }
+            throw new System.InvalidOperationException($"No se encontraron {expected} fotogramas.");
+        }
+
+        /// <summary>Caja que envuelve todo el primer plano dentro de un área (coordenadas de Unity, y hacia arriba).</summary>
+        public static RectInt InkBounds(Sheet s, RectInt area)
+        {
+            int x0 = int.MaxValue, y0 = int.MaxValue, x1 = -1, y1 = -1;
+            for (int y = area.yMin; y < area.yMax; y++)
+                for (int x = area.xMin; x < area.xMax; x++)
+                    if (s.IsForeground(x, y))
+                    {
+                        x0 = Mathf.Min(x0, x); x1 = Mathf.Max(x1, x);
+                        y0 = Mathf.Min(y0, y); y1 = Mathf.Max(y1, y);
+                    }
+            if (x1 < 0) throw new System.InvalidOperationException($"Área {area} vacía.");
+            return new RectInt(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+        }
+
+        /// <summary>
+        /// Remuestrea un rectángulo del origen a w×h exactos tomando el píxel central de cada celda
+        /// (sin regla de mayoría). Para piezas de tileset que deben llenar el tile entero.
+        /// </summary>
+        public static Color32[] Sample(Sheet s, RectInt src, int w, int h)
+        {
+            var output = new Color32[w * h];
+            for (int oy = 0; oy < h; oy++)
+                for (int ox = 0; ox < w; ox++)
+                {
+                    int sx = src.x + Mathf.Min(src.width - 1, (int)((ox + 0.5f) * src.width / w));
+                    int sy = src.y + Mathf.Min(src.height - 1, (int)((oy + 0.5f) * src.height / h));
+                    var c = s.Get(sx, sy);
+                    c.a = s.IsForeground(sx, sy) ? (byte)255 : (byte)0;
+                    output[oy * w + ox] = c;
+                }
+            return output;
+        }
+
+        /// <summary>
+        /// Quita la escalera dibujada dentro de los fotogramas de trepar: largueros (columnas casi llenas
+        /// en los bordes), peldaños grises conectados a ellos, contornos oscuros que se quedan sueltos
+        /// y restos de pocos píxeles. Los guantes (gris cálido) y el mono (azul saturado) se conservan.
+        /// </summary>
+        public static void StripLadder(Texture2D tex)
+        {
+            int w = tex.width, h = tex.height;
+            var px = tex.GetPixels32();
+            var removed = new bool[w * h];
+            bool Opaque(int i) => px[i].a > 0;
+
+            float ColumnFill(int x)
+            {
+                int n = 0;
+                for (int y = 0; y < h; y++) if (Opaque(y * w + x)) n++;
+                return n / (float)h;
+            }
+            for (int x = 0; x < w && ColumnFill(x) > 0.85f; x++)
+                for (int y = 0; y < h; y++) removed[y * w + x] = true;
+            for (int x = w - 1; x >= 0 && ColumnFill(x) > 0.85f; x--)
+                for (int y = 0; y < h; y++) removed[y * w + x] = true;
+
+            bool LadderGray(Color32 c)
+            {
+                int max = Mathf.Max(c.r, Mathf.Max(c.g, c.b)), min = Mathf.Min(c.r, Mathf.Min(c.g, c.b));
+                float lum = (c.r + c.g + c.b) / 3f;
+                return c.a > 0 && max - min < 40 && c.b >= c.r - 4 && lum >= 80 && lum <= 220;
+            }
+            bool Dark(Color32 c) => Mathf.Max(c.r, Mathf.Max(c.g, c.b)) < 70;
+
+            var stack = new Stack<int>();
+            for (int i = 0; i < removed.Length; i++) if (removed[i]) stack.Push(i);
+            while (stack.Count > 0)
+            {
+                int i = stack.Pop(), x = i % w, y = i / w;
+                foreach (var (dx, dy) in new[] { (1, 0), (-1, 0), (0, 1), (0, -1) })
+                {
+                    int nx = x + dx, ny = y + dy;
+                    if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+                    int j = ny * w + nx;
+                    if (!removed[j] && LadderGray(px[j])) { removed[j] = true; stack.Push(j); }
+                }
+            }
+
+            for (int pass = 0; pass < 3; pass++)
+            {
+                var kill = new List<int>();
+                for (int i = 0; i < px.Length; i++)
+                {
+                    if (removed[i] || !Opaque(i) || !Dark(px[i])) continue;
+                    int x = i % w, y = i / w;
+                    bool keep = false;
+                    for (int dy = -1; dy <= 1 && !keep; dy++)
+                        for (int dx = -1; dx <= 1 && !keep; dx++)
+                        {
+                            int nx = x + dx, ny = y + dy;
+                            if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+                            int j = ny * w + nx;
+                            keep = Opaque(j) && !removed[j] && !Dark(px[j]);
+                        }
+                    if (!keep) kill.Add(i);
+                }
+                foreach (int i in kill) removed[i] = true;
+            }
+
+            RemoveSmallIslands(px, removed, w, h, 10);
+            for (int i = 0; i < px.Length; i++) if (removed[i]) px[i] = new Color32(0, 0, 0, 0);
+            tex.SetPixels32(px);
+            tex.Apply();
+        }
+
+        static void RemoveSmallIslands(Color32[] px, bool[] removed, int w, int h, int minSize)
+        {
+            var seen = new bool[px.Length];
+            var comp = new List<int>();
+            for (int i = 0; i < px.Length; i++)
+            {
+                if (seen[i] || removed[i] || px[i].a == 0) continue;
+                comp.Clear();
+                comp.Add(i);
+                seen[i] = true;
+                for (int k = 0; k < comp.Count; k++)
+                {
+                    int x = comp[k] % w, y = comp[k] / w;
+                    foreach (var (dx, dy) in new[] { (1, 0), (-1, 0), (0, 1), (0, -1) })
+                    {
+                        int nx = x + dx, ny = y + dy;
+                        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+                        int j = ny * w + nx;
+                        if (!seen[j] && !removed[j] && px[j].a > 0) { seen[j] = true; comp.Add(j); }
+                    }
+                }
+                if (comp.Count < minSize) foreach (int j in comp) removed[j] = true;
+            }
+        }
+
+        /// <summary>Devuelve una copia con 1 px de margen y un contorno de color alrededor del sprite.</summary>
+        public static Texture2D AddOutline(Texture2D tex, Color32 color)
+        {
+            int w = tex.width + 2, h = tex.height + 2;
+            var src = tex.GetPixels32();
+            var output = new Color32[w * h];
+            bool Ink(int x, int y) => x >= 0 && y >= 0 && x < tex.width && y < tex.height && src[y * tex.width + x].a > 0;
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    int sx = x - 1, sy = y - 1;
+                    if (Ink(sx, sy)) { output[y * w + x] = src[sy * tex.width + sx]; continue; }
+                    bool edge = Ink(sx - 1, sy) || Ink(sx + 1, sy) || Ink(sx, sy - 1) || Ink(sx, sy + 1);
+                    output[y * w + x] = edge ? color : new Color32(0, 0, 0, 0);
+                }
+            Object.DestroyImmediate(tex);
+            return NewTexture(w, h, output);
+        }
+
+        /// <summary>Copia un sprite en un lienzo w×h con su esquina inferior izquierda en (ox, oy).</summary>
+        public static Texture2D Place(Texture2D tex, int w, int h, int ox, int oy)
+        {
+            var src = tex.GetPixels32();
+            var output = new Color32[w * h];
+            for (int y = 0; y < tex.height; y++)
+                for (int x = 0; x < tex.width; x++)
+                {
+                    int tx = x + ox, ty = y + oy;
+                    if (tx < 0 || ty < 0 || tx >= w || ty >= h) continue;
+                    if (src[y * tex.width + x].a > 0) output[ty * w + tx] = src[y * tex.width + x];
+                }
+            Object.DestroyImmediate(tex);
+            return NewTexture(w, h, output);
+        }
+
+        public static Texture2D NewTexture(int w, int h, Color32[] pixels)
+        {
+            var tex = new Texture2D(w, h, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
+            tex.SetPixels32(pixels);
+            tex.Apply();
+            return tex;
+        }
+
         /// <summary>Factor de escala para que el fotograma más alto mida targetHeight píxeles.</summary>
         public static float ScaleForHeight(Sheet s, int targetHeight)
         {

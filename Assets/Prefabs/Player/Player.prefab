@@ -82,7 +82,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 10
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: b61a2d54a8055492f83c6f8c197e0573, type: 3}
+  m_Sprite: {fileID: 21300000, guid: f0d83e8e22927448797107a7ae6ef325, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -239,9 +239,11 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   groundCheckDepth: 0.08
+  landingMinSpeed: 3
   animator: {fileID: 5242368924946764271}
   spriteRenderer: {fileID: 9074099730337373758}
   inputActions: {fileID: 0}
+  hurtPoseTime: 0.4
 --- !u!114 &2775217460163441520
 MonoBehaviour:
   m_ObjectHideFlags: 0

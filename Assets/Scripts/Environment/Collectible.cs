@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using BarrelAscent.Managers;
 using BarrelAscent.Player;
@@ -12,6 +13,9 @@ namespace BarrelAscent.Environment
     [RequireComponent(typeof(Collider2D))]
     public class Collectible : MonoBehaviour
     {
+        /// <summary>Se lanza cuando cualquier coleccionable se recoge (efectos y sonido).</summary>
+        public static event Action<Collectible> AnyCollected;
+
         [SerializeField] int points = 100;
         [SerializeField] Transform visual;
         [SerializeField] float bobAmplitude = 0.08f;
@@ -53,6 +57,7 @@ namespace BarrelAscent.Environment
             IsCollected = true;
             area.enabled = false;
             GameManager.Instance?.AddScore(points, "Coleccionable");
+            AnyCollected?.Invoke(this);
             StartCoroutine(PopAndRemove());
             return true;
         }

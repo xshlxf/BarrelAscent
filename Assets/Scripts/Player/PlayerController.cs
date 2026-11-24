@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using BarrelAscent.Environment;
 using UnityEngine;
@@ -35,18 +36,23 @@ namespace BarrelAscent.Player
         [SerializeField] LayerMask groundMask;
         [SerializeField] LayerMask ladderMask;
         [SerializeField] float groundCheckDepth = 0.08f;
+        [Tooltip("Velocidad de caída mínima para considerar un aterrizaje (efectos y sonido).")]
+        [SerializeField] float landingMinSpeed = 3f;
 
         [Header("Referencias")]
         [SerializeField] Animator animator;
         [SerializeField] SpriteRenderer spriteRenderer;
         [Tooltip("Opcional. Si está vacío se usan las Project-wide Actions (InputSystem.actions).")]
         [SerializeField] InputActionAsset inputActions;
+        [Tooltip("Tiempo que se muestra la pose de daño tras un golpe (s).")]
+        [SerializeField] float hurtPoseTime = 0.4f;
 
         static readonly int SpeedHash = Animator.StringToHash("Speed");
         static readonly int GroundedHash = Animator.StringToHash("Grounded");
         static readonly int ClimbingHash = Animator.StringToHash("Climbing");
         static readonly int ClimbSpeedHash = Animator.StringToHash("ClimbSpeed");
         static readonly int VelocityYHash = Animator.StringToHash("VelocityY");
+        static readonly int HurtHash = Animator.StringToHash("Hurt");
 
         Rigidbody2D body;
         CapsuleCollider2D bodyCollider;
@@ -61,6 +67,15 @@ namespace BarrelAscent.Player
         float feetOffset; // distancia del pivote del Rigidbody2D a la base del collider
         readonly List<Collider2D> overlapResults = new List<Collider2D>(4);
         ContactFilter2D ladderFilter;
+        bool wasGrounded;
+        float airborneMinVelocityY;
+        float hurtUntil = float.NegativeInfinity;
+        bool animatorHasHurt;
+
+        /// <summary>Se lanza al iniciar un salto (efectos y sonido).</summary>
+        public event Action Jumped;
+        /// <summary>Se lanza al aterrizar tras una caída de cierta velocidad (efectos y sonido).</summary>
+        public event Action Landed;
 
         public bool IsGrounded { get; private set; }
         public bool IsClimbing { get; private set; }
@@ -82,6 +97,11 @@ namespace BarrelAscent.Player
             body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
 
             ladderFilter = new ContactFilter2D { useTriggers = true, useLayerMask = true, layerMask = ladderMask };
+
+            // El parámetro "Hurt" lo añade la Fase 7; con un Animator anterior simplemente no se usa.
+            if (animator != null && animator.runtimeAnimatorController != null)
+                foreach (var p in animator.parameters)
+                    if (p.nameHash == HurtHash) animatorHasHurt = true;
         }
 
         void OnEnable()
@@ -137,7 +157,9 @@ namespace BarrelAscent.Player
 
         void FixedUpdate()
         {
+            float velocityYBefore = body.linearVelocity.y;
             UpdateGrounded();
+            DetectLanding(velocityYBefore);
 
             if (IsClimbing)
             {
@@ -168,6 +190,15 @@ namespace BarrelAscent.Player
             if (IsGrounded && !IsClimbing) lastGroundedTime = Time.time;
         }
 
+        void DetectLanding(float velocityYBefore)
+        {
+            if (!IsGrounded) airborneMinVelocityY = Mathf.Min(airborneMinVelocityY, velocityYBefore);
+            if (IsGrounded && !wasGrounded && !IsClimbing && airborneMinVelocityY <= -landingMinSpeed)
+                Landed?.Invoke();
+            if (IsGrounded || IsClimbing) airborneMinVelocityY = 0f;
+            wasGrounded = IsGrounded;
+        }
+
         void TryJump()
         {
             bool requested = Time.time - jumpRequestTime <= jumpBufferTime;
@@ -178,6 +209,7 @@ namespace BarrelAscent.Player
             jumpRequestTime = float.NegativeInfinity;
             lastGroundedTime = float.NegativeInfinity; // consume el contacto: sin doble salto
             IsGrounded = false;
+            Jumped?.Invoke();
         }
 
         // ---------- Escaleras ----------
@@ -305,6 +337,7 @@ namespace BarrelAscent.Player
             StopClimbing();
             body.linearVelocity = velocity;
             knockbackUntil = Time.time + duration;
+            hurtUntil = Time.time + Mathf.Max(duration, hurtPoseTime);
             lastGroundedTime = float.NegativeInfinity;
             IsGrounded = false;
         }
@@ -317,6 +350,7 @@ namespace BarrelAscent.Player
             transform.position = position;
             body.linearVelocity = Vector2.zero;
             lastGroundedTime = float.NegativeInfinity;
+            hurtUntil = float.NegativeInfinity;
         }
 
         // ---------- Presentación ----------
@@ -336,6 +370,7 @@ namespace BarrelAscent.Player
             animator.SetBool(ClimbingHash, IsClimbing);
             animator.SetFloat(ClimbSpeedHash, IsClimbing ? Mathf.Abs(moveInput.y) : 0f);
             animator.SetFloat(VelocityYHash, body.linearVelocity.y);
+            if (animatorHasHurt) animator.SetBool(HurtHash, Time.time < hurtUntil);
         }
 
         void OnDrawGizmosSelected()

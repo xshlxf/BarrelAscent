@@ -57,7 +57,9 @@ namespace BarrelAscent.EditorTools
                 var sheet = SpriteExtractor.Load(Path.Combine(ArtDir, name + ".png"), minGap: 10000);
                 var f = sheet.frames[0];
                 float scale = CollectibleSpritePx / (float)Mathf.Max(f.width, f.height);
-                SpriteExtractor.SavePng(SpriteExtractor.Downscale(sheet, f, scale), CollectibleSpritePath(name));
+                // Contorno amarillo de 1 px (Fase 7): el "componente" gris apenas se veía sobre el fondo de la zona 3.
+                var sprite = SpriteExtractor.AddOutline(SpriteExtractor.Downscale(sheet, f, scale), Yellow);
+                SpriteExtractor.SavePng(sprite, CollectibleSpritePath(name));
             }
             AssetDatabase.Refresh();
             foreach (var name in CollectibleArt) ConfigureSprite(CollectibleSpritePath(name), SpriteAlignment.Center);

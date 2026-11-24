@@ -28,7 +28,7 @@ Datos de balance por zona en un `ScriptableObject` `ZoneConfig` (velocidad barri
 ## 3. Decisiones pendientes de confirmar
 1. Render pipeline: Built-in 2D (plantilla por defecto), sin URP.
 2. Resolución: **640x360** (confirmado). 20x11,25 tiles visibles; x3 exacto en 1080p.
-3. Arte: recursos en `ArtSource/` (copiados del Escritorio). Barril integrado; resto en Fase 7 (ver revisión en PHASE4.md).
+3. Arte: recursos en `ArtSource/` (copiados del Escritorio), integrados en las Fases 4–7. Sin audio en el paquete.
 4. Control de versiones: git local en la carpeta del proyecto (sin remoto).
 
 ## 4. Estructura inicial
@@ -44,7 +44,8 @@ Ver sección 16 del documento maestro — creada tal cual bajo `Assets/`, más `
 7. F5: coleccionables, puntuación, vidas, reaparición, LevelManager, meta. ✅ (ver PHASE5.md)
 8. F3b: Zonas 2 y 3. ✅ (adelantado a la Fase 3)
 9. F6: menú, HUD, pausa, game over, victoria, reinicio. ✅ (ver PHASE6.md)
-10. F7: arte/audio definitivos. F8: pruebas + build.
+10. F7: arte/audio definitivos. ✅ (ver PHASE7.md; audio preparado sin clips)
+11. F8: pruebas finales + build independiente (macOS).
 
 ## 6. Trabajo paralelizable
 - Generación de arte (IA) en paralelo a todo el código.
