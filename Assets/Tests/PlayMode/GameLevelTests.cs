@@ -39,6 +39,13 @@ namespace BarrelAscent.Tests
             yield return null;
             yield return new WaitForFixedUpdate();
 
+            // Estas pruebas cubren solo escenario, cámara y barriles: sin reglas de partida
+            // (la meta daría la victoria y congelaría el tiempo, y los golpes restarían vidas).
+            var gameManager = Object.FindFirstObjectByType<BarrelAscent.Managers.GameManager>();
+            if (gameManager != null) gameManager.enabled = false;
+            foreach (var goal in Object.FindObjectsByType<Goal>(FindObjectsSortMode.None))
+                goal.GetComponent<Collider2D>().enabled = false;
+
             if (!withBarrels)
             {
                 var lm = Object.FindFirstObjectByType<BarrelAscent.Managers.LevelManager>();
@@ -74,7 +81,11 @@ namespace BarrelAscent.Tests
         static IEnumerator WaitSeconds(float s)
         {
             float end = Time.time + s;
-            while (Time.time < end) yield return new WaitForFixedUpdate();
+            while (Time.time < end)
+            {
+                if (Time.timeScale == 0f) Assert.Fail("El tiempo está detenido (timeScale = 0): la espera no terminaría.");
+                yield return new WaitForFixedUpdate();
+            }
         }
 
         float Feet => player.GetComponent<CapsuleCollider2D>().bounds.min.y;

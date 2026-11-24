@@ -5,9 +5,11 @@ using UnityEngine;
 namespace BarrelAscent.Managers
 {
     /// <summary>
-    /// Control de zonas: determina en qué zona está el jugador según su altura y activa
-    /// únicamente el spawner de barriles de esa zona (dificultad progresiva).
-    /// Fase 5 añadirá la progresión (bonus por zona) y la meta.
+    /// Zonas, progresión y meta:
+    ///  - Determina la zona del jugador por su altura y activa solo el spawner de esa zona.
+    ///  - Al entrar por primera vez en una zona superior, da por completada la anterior (+250, una vez).
+    ///  - Guarda el punto de reaparición de la zona más alta alcanzada.
+    ///  - Al llegar a la meta completa la última zona (+250), suma el bonus de cima (+1000) y declara la victoria.
     /// </summary>
     public class LevelManager : MonoBehaviour
     {
@@ -16,15 +18,38 @@ namespace BarrelAscent.Managers
         [SerializeField] float[] zoneStartY = { 0f, 14f, 30f };
         [Tooltip("Spawner de cada zona, en el mismo orden que zoneStartY.")]
         [SerializeField] BarrelSpawner[] zoneSpawners;
+        [Tooltip("Punto seguro de reaparición de cada zona, en el mismo orden.")]
+        [SerializeField] Transform[] respawnPoints;
 
-        /// <summary>Índice de zona (0, 1, 2) al que acaba de entrar el jugador.</summary>
+        [Header("Recompensas")]
+        [SerializeField] int zoneCompletionPoints = 250;
+        [SerializeField] int goalPoints = 1000;
+
+        /// <summary>Índice de zona (0, 1, 2) en la que está ahora el jugador.</summary>
         public event Action<int> ZoneChanged;
+        /// <summary>Zona completada por primera vez (índice de la zona superada).</summary>
+        public event Action<int> ZoneCompleted;
+        public event Action GoalReached;
 
         public int CurrentZone { get; private set; } = -1;
+        public int HighestZoneReached { get; private set; }
+        public bool IsGoalReached { get; private set; }
         public int ZoneCount => zoneStartY.Length;
+
+        public Vector3 RespawnPoint
+        {
+            get
+            {
+                if (respawnPoints == null || respawnPoints.Length == 0)
+                    return player != null ? player.position : Vector3.zero;
+                int i = Mathf.Clamp(HighestZoneReached, 0, respawnPoints.Length - 1);
+                return respawnPoints[i] != null ? respawnPoints[i].position : respawnPoints[0].position;
+            }
+        }
 
         void Start()
         {
+            if (player != null) HighestZoneReached = ZoneAt(player.position.y);
             UpdateZone(force: true);
         }
 
@@ -43,17 +68,44 @@ namespace BarrelAscent.Managers
 
         void UpdateZone(bool force)
         {
-            if (player == null) return;
+            if (player == null || IsGoalReached) return;
             int zone = ZoneAt(player.position.y);
             if (!force && zone == CurrentZone) return;
 
             CurrentZone = zone;
+            while (HighestZoneReached < zone)
+            {
+                CompleteZone(HighestZoneReached);
+                HighestZoneReached++;
+            }
+
             for (int i = 0; i < zoneSpawners.Length; i++)
                 if (zoneSpawners[i] != null) zoneSpawners[i].SetSpawning(i == zone);
             ZoneChanged?.Invoke(zone);
         }
 
-        /// <summary>Detiene todos los spawners (victoria, game over, pausa larga).</summary>
+        void CompleteZone(int zoneIndex)
+        {
+            GameManager.Instance?.AddScore(zoneCompletionPoints, $"Zona {zoneIndex + 1} completada");
+            ZoneCompleted?.Invoke(zoneIndex);
+        }
+
+        /// <summary>La llama Goal cuando el jugador toca la meta. Solo tiene efecto una vez.</summary>
+        public void ReachGoal()
+        {
+            if (IsGoalReached) return;
+            if (GameManager.Instance != null && GameManager.Instance.State != GameManager.GameState.Playing) return;
+
+            IsGoalReached = true;
+            CompleteZone(ZoneCount - 1);
+            HighestZoneReached = ZoneCount - 1;
+            GameManager.Instance?.AddScore(goalPoints, "Cima alcanzada");
+            StopAllSpawners();
+            GoalReached?.Invoke();
+            GameManager.Instance?.Win();
+        }
+
+        /// <summary>Detiene todos los spawners (victoria, game over).</summary>
         public void StopAllSpawners()
         {
             foreach (var s in zoneSpawners)

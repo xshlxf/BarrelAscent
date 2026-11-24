@@ -28,3 +28,6 @@
 .DS_Store
 crashlytics-buildid.txt
 sysinfo.txt
+
+# Escenas temporales del Test Runner
+/Assets/InitTestScene*.unity*

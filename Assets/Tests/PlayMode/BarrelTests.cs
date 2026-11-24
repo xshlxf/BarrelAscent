@@ -90,7 +90,11 @@ namespace BarrelAscent.Tests
         static IEnumerator WaitSeconds(float s)
         {
             float end = Time.time + s;
-            while (Time.time < end) yield return new WaitForFixedUpdate();
+            while (Time.time < end)
+            {
+                if (Time.timeScale == 0f) Assert.Fail("El tiempo está detenido (timeScale = 0): la espera no terminaría.");
+                yield return new WaitForFixedUpdate();
+            }
         }
 
         [UnityTest]
