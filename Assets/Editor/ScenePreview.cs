@@ -45,6 +45,53 @@ namespace BarrelAscent.EditorTools
             // La escena no se guarda: los cambios de cámara se descartan.
         }
 
+        /// <summary>
+        /// Capturas de la interfaz: menú principal, HUD y cada panel de GameLevel (UI_*.png).
+        /// El Canvas se pasa temporalmente a Screen Space - Camera para poder renderizarlo; la escena no se guarda.
+        /// </summary>
+        [MenuItem("Barrel Ascent/Tools/Capture UI Screens")]
+        public static void CaptureUi()
+        {
+            int w = ProjectSetup.RefResolutionX * 2, h = ProjectSetup.RefResolutionY * 2;
+
+            EditorSceneManager.OpenScene(ProjectSetup.MainMenuScene, OpenSceneMode.Single);
+            RenderWithUi(w, h, "UI_MainMenu.png");
+
+            EditorSceneManager.OpenScene(ProjectSetup.GameLevelScene, OpenSceneMode.Single);
+            RenderWithUi(w, h, "UI_HUD.png");
+            foreach (var panel in new[] { "PausePanel", "GameOverPanel", "VictoryPanel" })
+            {
+                var go = FindInactive(panel);
+                go.SetActive(true);
+                RenderWithUi(w, h, $"UI_{panel}.png");
+                go.SetActive(false);
+            }
+        }
+
+        static GameObject FindInactive(string name)
+        {
+            foreach (var t in Resources.FindObjectsOfTypeAll<Transform>())
+                if (t.name == name && t.gameObject.scene.IsValid()) return t.gameObject;
+            throw new System.InvalidOperationException($"No existe {name}");
+        }
+
+        static void RenderWithUi(int w, int h, string file)
+        {
+            var cam = Camera.main;
+            var canvas = Object.FindFirstObjectByType<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.worldCamera = cam;
+            canvas.planeDistance = 5f;
+            var rt = new RenderTexture(w, h, 24) { filterMode = FilterMode.Point };
+            cam.targetTexture = rt;
+            Canvas.ForceUpdateCanvases();
+            foreach (var tmp in Object.FindObjectsByType<TMPro.TMP_Text>(FindObjectsSortMode.None)) tmp.ForceMeshUpdate(true, true);
+            Canvas.ForceUpdateCanvases();
+            cam.targetTexture = null;
+            rt.Release();
+            Render(cam, w, h, Path.Combine(Dir, file));
+        }
+
         static void Render(Camera cam, int w, int h, string path)
         {
             var rt = new RenderTexture(w, h, 24) { filterMode = FilterMode.Point };

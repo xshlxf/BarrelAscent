@@ -43,7 +43,7 @@ Ver sección 16 del documento maestro — creada tal cual bajo `Assets/`, más `
 6. F4b: spawner + ZoneConfig. ✅
 7. F5: coleccionables, puntuación, vidas, reaparición, LevelManager, meta. ✅ (ver PHASE5.md)
 8. F3b: Zonas 2 y 3. ✅ (adelantado a la Fase 3)
-9. F6: menú, HUD, pausa, game over, victoria, reinicio.
+9. F6: menú, HUD, pausa, game over, victoria, reinicio. ✅ (ver PHASE6.md)
 10. F7: arte/audio definitivos. F8: pruebas + build.
 
 ## 6. Trabajo paralelizable

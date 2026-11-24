@@ -38,14 +38,23 @@ namespace BarrelAscent.EditorTools.Art
             return sheet;
         }
 
-        static bool LooksLikeBackground(Color32 c) =>
-            c.a < 40 || (c.r > 205 && c.g > 205 && c.b > 205);
-
         // Relleno por inundación desde los bordes: solo el fondo conectado al exterior se elimina,
         // así los brillos claros dentro del sprite se conservan.
+        // El color de fondo se toma de la esquina: transparente, blanco (la mayoría) o negro (paneles de UI).
         static bool[] BuildForegroundMask(Sheet s)
         {
             int w = s.width, h = s.height;
+            Color32 corner = s.pixels[0];
+            bool lightBackground = corner.a < 40 || (corner.r > 200 && corner.g > 200 && corner.b > 200);
+
+            bool LooksLikeBackground(Color32 c)
+            {
+                if (c.a < 40) return true;
+                if (lightBackground) return c.r > 205 && c.g > 205 && c.b > 205;
+                int d = Mathf.Abs(c.r - corner.r) + Mathf.Abs(c.g - corner.g) + Mathf.Abs(c.b - corner.b);
+                return d < 24;
+            }
+
             var background = new bool[w * h];
             var queue = new Queue<int>();
 
@@ -161,6 +170,34 @@ namespace BarrelAscent.EditorTools.Art
                 for (int x = x0; x < Mathf.Max(x1, x0 + 1); x++)
                     if (s.IsForeground(x, y)) return s.Get(x, y);
             return new Color32(0, 0, 0, 0);
+        }
+
+        /// <summary>
+        /// Reduce una imagen completa (sin quitar fondo) a w×h muestreando el centro de cada bloque.
+        /// Para fondos de pantalla.
+        /// </summary>
+        public static Texture2D Resize(string path, int w, int h)
+        {
+            var src = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            if (!src.LoadImage(File.ReadAllBytes(path))) throw new IOException($"No se pudo leer {path}");
+            var pixels = src.GetPixels32();
+            int sw = src.width, sh = src.height;
+            Object.DestroyImmediate(src);
+
+            var output = new Color32[w * h];
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    int sx = Mathf.Clamp(Mathf.FloorToInt((x + 0.5f) * sw / w), 0, sw - 1);
+                    int sy = Mathf.Clamp(Mathf.FloorToInt((y + 0.5f) * sh / h), 0, sh - 1);
+                    var c = pixels[sy * sw + sx];
+                    c.a = 255;
+                    output[y * w + x] = c;
+                }
+            var tex = new Texture2D(w, h, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
+            tex.SetPixels32(output);
+            tex.Apply();
+            return tex;
         }
 
         /// <summary>Factor de escala para que el fotograma más alto mida targetHeight píxeles.</summary>
